@@ -1,3 +1,13 @@
+# Misc - added by BSG
+temp_*
+temp.*
+temp/
+.idea
+.DS_Store
+*.pdf
+*pdf
+*~
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
