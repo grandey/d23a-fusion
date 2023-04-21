@@ -1,0 +1,19 @@
+# To create, use conda env create:
+# conda env create --file environment.yml
+# To update, recreate from scratch (due to issues with --prune option):
+# conda env create --file environment.yml --force
+name: d23a-fusion
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - jupyterlab
+  - notebook
+  - numpy
+  - pandas
+  - xarray
+  - NetCDF4
+  - matplotlib
+  - seaborn
+  - watermark
