@@ -1,7 +1,9 @@
 # d23a-fusion: Analysis code for "Fusion of Probabilistic Projections of Sea Level"
 
+[![DOI](https://zenodo.org/badge/630738591.svg)](https://zenodo.org/badge/latestdoi/630738591)
+
 ## Usage guidelines
-This repository accompanies the following manuscript (in preparation):
+This repository accompanies the following manuscript:
 
 B. S. Grandey, J. Dauwels, B. P. Horton, and L. Y. Chew (2023),  **Fusion of Probabilistic Projections of Sea Level**, _in preparation_.
 
