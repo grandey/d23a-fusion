@@ -5,11 +5,10 @@
 ## Usage guidelines
 This repository accompanies the following manuscript:
 
-B. S. Grandey, J. Dauwels, B. P. Horton, and L. Y. Chew (2023),  **Fusion of Probabilistic Projections of Sea Level**, _in preparation_.
+B. S. Grandey, J. Dauwels, B. P. Horton, and L. Y. Chew (2023),  **Fusion of Probabilistic Projections of Sea Level**, Preprint at _Research Square_, [doi:10.21203/rs.3.rs-2922142/v1](https://doi.org/10.21203/rs.3.rs-2922142/v1).
 
 The manuscript serves as the primary reference.
 The Zenodo archive of this repository serves as a secondary reference.
-
 
 ## Workflow
 
