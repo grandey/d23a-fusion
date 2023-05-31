@@ -20,7 +20,7 @@ conda env create --file environment.yml
 conda activate d23a-fusion
 ```
 
-The analysis has been performed within this environment on _macOS 13_.
+The analysis has been performed within this environment on _macOS 13_ (arm64).
 
 ### Input data
 The analysis code requires the global-mean sea-level data from the [IPCC AR6 Sea Level Projections](https://doi.org/10.5281/zenodo.6382554), which can be downloaded as follows:
