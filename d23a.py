@@ -37,8 +37,6 @@ def get_watermark():
 @cache
 def read_sea_level_qf(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100):
     """
-    read_sea_level_qf(projection_source, component, scenario, year)
-
     Read quantile function corresponding to sea-level projection (either AR6 ISMIP6, AR6 SEJ, p-box, or fusion).
 
     Parameters
@@ -49,8 +47,9 @@ def read_sea_level_qf(projection_source='fusion', component='total', scenario='S
         'p-box'/'bounding quantile function' (p-box bounding quantile function of ISMIP6 & SEJ),
         and 'fusion' (fusion of ISMIP6 and bounding quantile function, weighted using triangular function; default).
     component : str
-        Component of global sea level change. Options are 'GrIS' (Greenland Ice Sheet), 'EAIS' (East Antarctic Ice Sheet),
-        'WAIS' (West Antarctic Ice Sheet), and 'total' (total global-mean sea level; default).
+        Component of global sea level change. Options are 'GrIS' (Greenland Ice Sheet),
+        'EAIS' (East Antarctic Ice Sheet), 'WAIS' (West Antarctic Ice Sheet), and
+        'total' (total global-mean sea level; default).
         Note: for ISMIP6, 'PEN' is also included in 'WAIS'.
     scenario : str
         Scenario. Options are 'SSP1-2.6' and 'SSP5-8.5' (default).
@@ -89,13 +88,13 @@ def read_sea_level_qf(projection_source='fusion', component='total', scenario='S
             pbox_da = read_sea_level_qf(projection_source='p-box', component=component, scenario=scenario, year=year)
             # Weights for ISMIP6 emulator data: triangular function, with peak at median
             weights_q = 1 - np.abs(ism_da.quantiles - 0.5) * 2  # _q indicates quantile probability dimension
-            # Combine ISMIP6 and p-box bounding quantile function data using weights; rely on automatic broadcasting/alignment
+            # Combine ISMIP6 and bounding quantile function data using weights; rely on automatic broadcasting/alignment
             qf_da = weights_q * ism_da + (1 - weights_q) * pbox_da
             # Copy units attribute
             qf_da.attrs['units'] = ism_da.attrs['units']
         # Is result monotonic?
         if np.any((qf_da[1:].data - qf_da[:-1].data) < 0):  # allow difference to equal zero
-            warnings.warn(f'read_sea_level_qf{projection_source, component, scenario, year} result is not monotonic wrt quantiles.')
+            warnings.warn(f'read_sea_level_qf{projection_source, component, scenario, year} result not monotonic.')
         # Return result (Case 1)
         return qf_da
 
@@ -119,10 +118,10 @@ def read_sea_level_qf(projection_source='fusion', component='total', scenario='S
         raise ValueError(f'Unrecognized argument value: scenario={scenario}')
     # Input directory and file
     if component == 'total':
-        in_dir = Path(f'data/ar6/global/dist_workflows/{workflow_code}/{scenario_code}').expanduser()
+        in_dir = Path(f'data/ar6/global/dist_workflows/{workflow_code}/{scenario_code}')
         in_fn = in_dir / 'total-workflow.nc'
     else:
-        in_dir = Path(f'data/ar6/global/dist_components').expanduser()
+        in_dir = Path(f'data/ar6/global/dist_components')
         if component == 'GrIS':
             in_fn = in_dir / f'icesheets-ipccar6-{projection_code}icesheet-{scenario_code}_GIS_globalsl.nc'
         else:
@@ -142,7 +141,7 @@ def read_sea_level_qf(projection_source='fusion', component='total', scenario='S
         print(f'read_sea_level_qf{projection_source, component, scenario, year}: including PEN in WAIS.')
     # Is result monotonic?
     if np.any((qf_da[1:].data - qf_da[:-1].data) < 0):
-        warnings.warn(f'read_sea_level_qf{projection_source, component, scenario, year} result is not monotonic wrt quantiles.')
+        warnings.warn(f'read_sea_level_qf{projection_source, component, scenario, year} result not monotonic.')
     # Return result (Case 2)
     return qf_da
 
