@@ -78,7 +78,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     Parameters
     ----------
     workflow : str
-        AR6 workflow (e.g. 'wf_1e', default) or p-box bound ('lower' or 'upper').
+        AR6 workflow (e.g. 'wf_1e', default) or p-box bound ('lower', 'upper', 'confidence').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -129,9 +129,24 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
             qf_da = concat_da.min(dim='wf')
         else:
             qf_da = concat_da.max(dim='wf')
+    # Case 3: "confidence" bound of p-box
+    elif workflow == 'confidence':
+        # Get data for lower and upper p-box bounds
+        lower_df = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_df = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Derive confidence distribution
+        qf_da = xr.concat([lower_df.sel(quantiles=slice(0, 0.5)),  # lower bound below median
+                           upper_df.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
+                          dim='quantiles')
+        med_idx = len(qf_da) // 2  # index corresponding to mean
+        qf_da[med_idx] = (lower_df[med_idx] + upper_df[med_idx]) / 2  # median is mean of lower and upper bounds
     # Plot?
     if plot:
-        qf_da.plot(y='quantiles')
+        if 'wf' in workflow:
+            linestyle = ':'
+        else:
+            linestyle = '--'
+        qf_da.plot(y='quantiles', label=workflow, alpha=0.5, linestyle=linestyle)
     # Return result
     return qf_da
 
