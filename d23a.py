@@ -28,10 +28,46 @@ plt.rcParams['figure.titleweight'] = 'bold'  # suptitle
 plt.rcParams['figure.titlesize'] = 'x-large'  # suptitle
 
 
+# Constants
+IN_BASE = Path.cwd() / 'data'  # base directory of input data
+
+
 def get_watermark():
     """Return watermark string, including versions of dependencies."""
     packages = ('matplotlib,numpy,pandas,seaborn,xarray')
     return watermark(machine=True, conda=True, python=True, packages=packages)
+
+
+def get_gauge_info(gauge='TANJONG_PAGAR'):
+    """
+    Get name, ID, latitude, and longitude of tide gauge, using location_list.lst
+    (https://doi.org/10.5281/zenodo.6382554).
+
+    Parameters
+    ----------
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+
+    Returns
+    ----------
+    gauge_info : dict
+        Dictionary containing gauge_name, gauge_id, lat, lon.
+    """
+    # Read input file into DataFrame
+    in_fn = IN_BASE / 'location_list.lst'
+    in_df = pd.read_csv(in_fn, sep='\t', names=['gauge_name', 'gauge_id', 'lat', 'lon'])
+    # Get data for gauge of interest
+    try:
+        if type(gauge) == str:
+            df = in_df[in_df.gauge_name == gauge]
+        else:
+            df = in_df[in_df.gauge_id == gauge]
+        gauge_info = dict()
+        for c in ['gauge_name', 'gauge_id', 'lat', 'lon']:
+            gauge_info[c] = df[c].values[0]
+    except IndexError:
+        raise ValueError(f"gauge='{gauge}' not found.")
+    return gauge_info
 
 
 @cache
