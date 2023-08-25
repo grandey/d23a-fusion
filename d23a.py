@@ -71,6 +71,55 @@ def get_gauge_info(gauge='TANJONG_PAGAR'):
 
 
 @cache
+def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', plot=False):
+    """
+    Return quantile function corresponding to a projection of total RSLC.
+
+    Parameters
+    ----------
+    workflow : str
+        AR6 workflow. Default is wf_1e.
+    rate : bool
+        If True, return RSLC rate. If False (default), return RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : into
+        Year. Default is 2100.
+    guage : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+
+    Returns
+    -------
+    qf_da : xarray DataArray
+        DataArray of RSLC quantiles in mm or mm/yr for different probability levels.
+    """
+    # Find gauge_id for location
+    gauge_info = get_gauge_info(gauge=gauge)
+    gauge_id = gauge_info['gauge_id']
+    # Case 1: single workflow, corresponding to one of the alternative projections
+    if workflow in ['wf_1e', 'wf_1f', 'wf_2e', 'wf_2f', 'wf_3e', 'wf_3f', 'wf_4']:
+        if not rate:  # RSLC
+            in_dir = IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows' / workflow / scenario
+            in_fn = in_dir / 'total-workflow.nc'
+        else:  # RSLC rate
+            in_dir = IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows_rates' / workflow / scenario
+            in_fn = in_dir / 'total-workflow_rates.nc'
+        # Does input file exist?
+        if not in_fn.exists():
+            raise FileNotFoundError(in_fn)
+        # Read data
+        if not rate:
+            qf_da = xr.open_dataset(in_fn)['sea_level_change'].sel(years=year, locations=gauge_id)
+        else:
+            qf_da = xr.open_dataset(in_fn)['sea_level_change_rate'].sel(years=year, locations=gauge_id)
+    # Plot?
+    if plot:
+        qf_da.plot(y='quantiles')
+    # Return results for case 1 (single workflow)
+    return qf_da
+
+
+@cache
 def read_sea_level_qf(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100):
     """
     Read quantile function corresponding to sea-level projection (either AR6 ISMIP6, AR6 SEJ, p-box, or fusion).
