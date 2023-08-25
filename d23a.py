@@ -78,7 +78,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     Parameters
     ----------
     workflow : str
-        AR6 workflow. Default is wf_1e.
+        AR6 workflow (e.g. 'wf_1e', default) or p-box bound ('lower' or 'upper').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -112,10 +112,27 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
             qf_da = xr.open_dataset(in_fn)['sea_level_change'].sel(years=year, locations=gauge_id)
         else:
             qf_da = xr.open_dataset(in_fn)['sea_level_change_rate'].sel(years=year, locations=gauge_id)
+    # Case 2: lower or upper bound of low-confidence p-box
+    elif workflow in ['lower', 'upper']:
+        # Contributing workflows (https://doi.org/10.5194/egusphere-2023-14)
+        if not rate:
+            wf_list = ['wf_1e', 'wf_2e', 'wf_3e', 'wf_4']
+        else:
+            wf_list = ['wf_1f', 'wf_2f', 'wf_3f', 'wf_4']
+        # Get quantile function data for each of these workflows
+        qf_da_list = []
+        for wf in wf_list:
+            qf_da_list.append(get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge))
+        concat_da = xr.concat(qf_da_list, 'wf')
+        # Find lower or upper bound
+        if workflow == 'lower':
+            qf_da = concat_da.min(dim='wf')
+        else:
+            qf_da = concat_da.max(dim='wf')
     # Plot?
     if plot:
         qf_da.plot(y='quantiles')
-    # Return results for case 1 (single workflow)
+    # Return result
     return qf_da
 
 
