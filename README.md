@@ -33,6 +33,7 @@ curl "https://zenodo.org/record/6382554/files/ar6-regional-confidence.zip?downlo
 unzip data/ar6-regional-confidence.zip -d data/
 curl "https://zenodo.org/record/5914932/files/ar6-regional-distributions.zip?download=1" --output data/ar6-regional-distributions.zip
 unzip data/ar6-regional-distributions.zip -d data/
+curl "https://zenodo.org/record/6382554/files/location_list.lst?download=1" --output data/location_list.lst
 ```
 
 Users of these data should note the [required acknowledgments and citations](https://doi.org/10.5281/zenodo.6382554).
