@@ -78,7 +78,8 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     Parameters
     ----------
     workflow : str
-        AR6 workflow (e.g. 'wf_1e', default) or p-box bound ('lower', 'upper', 'confidence').
+        AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'confidence'),
+        or effective distribution (e.g. 'effective w=0.5').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -140,6 +141,15 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
                           dim='quantiles')
         med_idx = len(qf_da) // 2  # index corresponding to mean
         qf_da[med_idx] = (lower_df[med_idx] + upper_df[med_idx]) / 2  # median is mean of lower and upper bounds
+    # Case 4: "effective" quantile function (Rohmer et al., 2019)
+    elif 'effective' in workflow:
+        # Get data for lower and upper p-box bounds
+        lower_df = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_df = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Get constant weight w
+        w = float(workflow.split()[-1][2:])
+        # Derive effective distribution
+        qf_da = w * upper_df + (1 - w) * lower_df
     # Plot?
     if plot:
         if 'wf' in workflow:
