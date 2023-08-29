@@ -79,7 +79,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     ----------
     workflow : str
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'confidence'),
-        or effective distribution (e.g. 'effective w=0.5').
+        effective distribution (e.g. 'effective w=0.5'), or fusion (e.g. 'fusion').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -133,27 +133,42 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     # Case 3: "confidence" bound of p-box
     elif workflow == 'confidence':
         # Get data for lower and upper p-box bounds
-        lower_df = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        upper_df = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Derive confidence distribution
-        qf_da = xr.concat([lower_df.sel(quantiles=slice(0, 0.5)),  # lower bound below median
-                           upper_df.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
+        qf_da = xr.concat([lower_da.sel(quantiles=slice(0, 0.5)),  # lower bound below median
+                           upper_da.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
                           dim='quantiles')
         med_idx = len(qf_da) // 2  # index corresponding to mean
-        qf_da[med_idx] = (lower_df[med_idx] + upper_df[med_idx]) / 2  # median is mean of lower and upper bounds
+        qf_da[med_idx] = (lower_da[med_idx] + upper_da[med_idx]) / 2  # median is mean of lower and upper bounds
     # Case 4: "effective" quantile function (Rohmer et al., 2019)
     elif 'effective' in workflow:
         # Get data for lower and upper p-box bounds
-        lower_df = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        upper_df = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Get constant weight w
         w = float(workflow.split()[-1][2:])
         # Derive effective distribution
-        qf_da = w * upper_df + (1 - w) * lower_df
+        qf_da = w * upper_da + (1 - w) * lower_da
+    # Case 5: fusion distribution
+    elif workflow == 'fusion':
+        # Get data for preferred workflow (wf_1e/wf_2f) and confidence bound of p-box
+        if not rate:
+            wf = 'wf_2e'  # preferred projection near median
+        else:
+            wf = 'wf_2f'
+        pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        conf_da = get_rslc_qf(workflow='confidence', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Triangular weighting function, with weights depending on probability p
+        w_p = 1 - np.abs(pref_da.quantiles - 0.5) * 2
+        # Derive fusion distribution; rely on automatic broadcasting/alignment
+        qf_da = w_p * pref_da + (1 - w_p) * conf_da
     # Plot?
     if plot:
         if 'wf' in workflow:
             linestyle = ':'
+        elif 'fusion' in workflow:
+            linestyle = '-'
         else:
             linestyle = '--'
         qf_da.plot(y='quantiles', label=workflow, alpha=0.5, linestyle=linestyle)
