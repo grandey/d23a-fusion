@@ -78,7 +78,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     Parameters
     ----------
     workflow : str
-        AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'confidence'),
+        AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
         effective distribution (e.g. 'effective w=0.5'), or fusion (e.g. 'fusion').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
@@ -130,12 +130,12 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
             qf_da = concat_da.min(dim='wf')
         else:
             qf_da = concat_da.max(dim='wf')
-    # Case 3: "confidence" bound of p-box
-    elif workflow == 'confidence':
+    # Case 3: Outer bound of p-box
+    elif workflow == 'outer':
         # Get data for lower and upper p-box bounds
         lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
         upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        # Derive confidence distribution
+        # Derive outer bound
         qf_da = xr.concat([lower_da.sel(quantiles=slice(0, 0.5)),  # lower bound below median
                            upper_da.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
                           dim='quantiles')
@@ -152,17 +152,17 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         qf_da = w * upper_da + (1 - w) * lower_da
     # Case 5: fusion distribution
     elif workflow == 'fusion':
-        # Get data for preferred workflow (wf_1e/wf_2f) and confidence bound of p-box
+        # Get data for preferred workflow (wf_1e/wf_2f) and outer bound of p-box
         if not rate:
             wf = 'wf_2e'  # preferred projection near median
         else:
             wf = 'wf_2f'
         pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        conf_da = get_rslc_qf(workflow='confidence', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        outer_da = get_rslc_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
         w_p = 1 - np.abs(pref_da.quantiles - 0.5) * 2
         # Derive fusion distribution; rely on automatic broadcasting/alignment
-        qf_da = w_p * pref_da + (1 - w_p) * conf_da
+        qf_da = w_p * pref_da + (1 - w_p) * outer_da
     # Plot?
     if plot:
         if 'wf' in workflow:
