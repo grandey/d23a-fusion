@@ -86,8 +86,10 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         Options are 'ssp126' and 'ssp585' (default).
     year : into
         Year. Default is 2100.
-    guage : int or str
+    gauge : int or str
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    plot : Bool
+        Plot the result? Default is False.
 
     Returns
     -------
@@ -177,8 +179,59 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
 
 
 @cache
+def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR',
+                         n_samples=int(1e6), plot=False):
+    """
+    Sample marginal distribution corresponding to a projection of total RSLC.
+
+    Parameters
+    ----------
+    workflow : str
+        AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
+        effective distribution (e.g. 'effective w=0.5'), or fusion (e.g. 'fusion').
+    rate : bool
+        If True, return RSLC rate. If False (default), return RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : into
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    n_samples : int
+        Number of samples. Default is int(1e6).
+    plot : Bool
+        Plot diagnostic plots? Default is False.
+
+    Returns
+    -------
+    marginal_n : numpy array
+        A one-dimensional array of randomly drawn samples.
+    """
+    # Read quantile function data
+    qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge, plot=False)
+    # Sample uniform distribution
+    rng = np.random.default_rng(12345)
+    uniform_n = rng.uniform(size=n_samples)
+    # Transform these samples to marginal distribution samples by interpolation of quantile function
+    marginal_n = qf_da.interp(quantiles=uniform_n).data
+    # Plot diagnostic plots?
+    if plot:
+        fig, axs = plt.subplots(1, 2, figsize=(8, 4), constrained_layout=True)
+        sns.ecdfplot(marginal_n, label='marginal_n ECDF', ax=axs[0])
+        axs[0].plot(qf_da, qf_da['quantiles'], label='"True" quantile function', linestyle='--')
+        sns.histplot(marginal_n, bins=100, label='marginal_n', ax=axs[1])
+        for ax in axs:
+            ax.legend()
+        plt.suptitle(f'{workflow}, rate={rate}, {scenario}, {year}, {gauge}')
+        plt.show()
+    return marginal_n
+
+
+@cache
 def read_sea_level_qf(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100):
     """
+    SUPERSEDED BY get_rslc_qf() ABOVE.
+
     Read quantile function corresponding to sea-level projection (either AR6 ISMIP6, AR6 SEJ, p-box, or fusion).
 
     Parameters
@@ -292,6 +345,8 @@ def read_sea_level_qf(projection_source='fusion', component='total', scenario='S
 def sample_sea_level_marginal(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100,
                               n_samples=int(1e6), plot=False):
     """
+    SUPERSEDED BY sample_rslc_marginal() ABOVE.
+
     sample_sea_level_marginal(projection_source, component, scenario, year, n_samples, plot)
 
     Sample marginal distribution corresponding to sea-level projection (either AR6 ISMIP6, AR6 SEJ, p-box, or fusion).
