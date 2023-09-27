@@ -26,10 +26,18 @@ plt.rcParams['legend.fontsize'] = 'large'
 plt.rcParams['axes.titleweight'] = 'bold'  # titles for subplots
 plt.rcParams['figure.titleweight'] = 'bold'  # suptitle
 plt.rcParams['figure.titlesize'] = 'x-large'  # suptitle
+plt.rcParams['grid.color'] = '0.95'
 
 
 # Constants
 IN_BASE = Path.cwd() / 'data'  # base directory of input data
+WF_COLOR_DICT = {'wf_1e': 'lavender', 'wf_1f': 'lavender',  # colours to use when plotting different workflows
+                 'wf_2e': 'greenyellow', 'wf_2f': 'greenyellow',
+                 'wf_3e': 'darkorange', 'wf_3f': 'darkorange',
+                 'wf_4': 'darkred',
+                 'lower': '0.5', 'upper': '0.5',
+                 'outer': 'red', 'effective w=0.5': 'cyan',
+                 'fusion': 'darkblue'}
 
 
 def get_watermark():
@@ -84,7 +92,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
-    year : into
+    year : int
         Year. Default is 2100.
     gauge : int or str
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
@@ -141,7 +149,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         qf_da = xr.concat([lower_da.sel(quantiles=slice(0, 0.5)),  # lower bound below median
                            upper_da.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
                           dim='quantiles')
-        med_idx = len(qf_da) // 2  # index corresponding to mean
+        med_idx = len(qf_da) // 2  # index corresponding to median
         qf_da[med_idx] = (lower_da[med_idx] + upper_da[med_idx]) / 2  # median is mean of lower and upper bounds
     # Case 4: "effective" quantile function (Rohmer et al., 2019)
     elif 'effective' in workflow:
@@ -154,7 +162,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         qf_da = w * upper_da + (1 - w) * lower_da
     # Case 5: fusion distribution
     elif workflow == 'fusion':
-        # Get data for preferred workflow (wf_1e/wf_2f) and outer bound of p-box
+        # Get data for preferred workflow (wf_2e/wf_2f) and outer bound of p-box
         if not rate:
             wf = 'wf_2e'  # preferred projection near median
         else:
@@ -193,7 +201,7 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
-    year : into
+    year : int
         Year. Default is 2100.
     gauge : int or str
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
@@ -226,6 +234,66 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
         plt.show()
     return marginal_n
 
+
+def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
+                  rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', ax=None):
+    """
+    Plot quantile functions corresponding to projections of total RSLC.
+
+    Parameters
+    ----------
+    workflows : list of str
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusion.
+        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4').
+    bg_workflows : list of str
+        List containing workflows to show in lighter colour in background. Default is empty list().
+    pbox : bool
+        If True, plot p-box. Default is False.
+    rate : bool
+        If True, return RSLC rate. If False (default), return RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+    # Plot p-box?
+    if pbox:
+        # Get lower and upper p-box bounds
+        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Shade p-box
+        ax.fill_betweenx(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
+    # Loop over background workflows
+    for workflow in bg_workflows:
+        # Get quantile function data
+        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Plot data
+        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, label=workflow, linestyle='--')
+    # Loop over workflows
+    for workflow in workflows:
+        # Get quantile function data
+        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Plot data
+        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=workflow)
+    # Customise plot
+    ax.legend(loc='lower right')
+    ax.set_ylim([0, 1])
+    ax.set_ylabel('Probability')
+    if rate:
+        ax.set_xlabel(f'RSLC rate, mm/yr')
+    else:
+        ax.set_xlabel(f'RSLC, mm')
+    return ax
 
 @cache
 def read_sea_level_qf(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100):
