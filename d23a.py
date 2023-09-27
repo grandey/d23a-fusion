@@ -278,15 +278,13 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
         ax.fill_betweenx(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
     # Loop over background workflows
     for workflow in bg_workflows:
-        # Get quantile function data
+        # Get quantile function data and plot
         qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        # Plot data
         ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, label=workflow, linestyle='--')
     # Loop over workflows
     for workflow in workflows:
-        # Get quantile function data
+        # Get quantile function data and plot
         qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        # Plot data
         ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=workflow)
     # Customise plot
     ax.legend(loc='lower right')
@@ -297,6 +295,55 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     else:
         ax.set_xlabel(f'RSLC, mm')
     return ax
+
+
+def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
+                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', ax=None):
+    """
+    Plot marginal distributions corresponding to projections of total RSLC.
+
+    Parameters
+    ----------
+    workflows : list of str
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusion.
+        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4').
+    bg_workflows : list of str
+        List containing workflows to show in lighter colour in background. Default is empty list().
+    rate : bool
+        If True, return RSLC rate. If False (default), return RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+    # Loop over background workflows
+    for workflow in bg_workflows:
+        # Get marginal samples and plot
+        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, label=workflow, linestyle='--',  ax=ax)
+    # Loop over workflows
+    for workflow in workflows:
+        # Get marginal samples and plot
+        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=workflow, ax=ax)
+    # Customise plot
+    ax.legend(loc='upper right')
+    if rate:
+        ax.set_xlabel(f'RSLC rate, mm/yr')
+    else:
+        ax.set_xlabel(f'RSLC, mm')
+    return ax
+
 
 @cache
 def read_sea_level_qf(projection_source='fusion', component='total', scenario='SSP5-8.5', year=2100):
