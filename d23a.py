@@ -150,7 +150,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
                            upper_da.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
                           dim='quantiles')
         med_idx = len(qf_da) // 2  # index corresponding to median
-        qf_da[med_idx] = (lower_da[med_idx] + upper_da[med_idx]) / 2  # median is mean of lower and upper bounds
+        qf_da[med_idx] = np.nan  # median is undefined
     # Case 4: "effective" quantile function (Rohmer et al., 2019)
     elif 'effective' in workflow:
         # Get data for lower and upper p-box bounds
@@ -173,6 +173,9 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         w_p = 1 - np.abs(pref_da.quantiles - 0.5) * 2
         # Derive fusion distribution; rely on automatic broadcasting/alignment
         qf_da = w_p * pref_da + (1 - w_p) * outer_da
+        # Correct median (which is currently nan due to nan in outer_da)
+        med_idx = len(qf_da) // 2  # index corresponding to median
+        qf_da[med_idx] = pref_da[med_idx]  # median follows preferred workflow
     # Plot?
     if plot:
         if 'wf' in workflow:
