@@ -243,14 +243,14 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     Parameters
     ----------
     workflows : list of str
-        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusion.
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions.
         Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4').
     bg_workflows : list of str
         List containing workflows to show in lighter colour in background. Default is empty list().
     pbox : bool
         If True, plot p-box. Default is False.
     rate : bool
-        If True, return RSLC rate. If False (default), return RSLC.
+        If True, use RSLC rate. If False (default), use RSLC.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
@@ -302,12 +302,12 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     Parameters
     ----------
     workflows : list of str
-        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusion.
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions.
         Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4').
     bg_workflows : list of str
         List containing workflows to show in lighter colour in background. Default is empty list().
     rate : bool
-        If True, return RSLC rate. If False (default), return RSLC.
+        If True, use RSLC rate. If False (default), use RSLC.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
@@ -340,6 +340,64 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     else:
         ax.set_xlabel(f'RSLC, mm')
     return ax
+
+
+def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_2e',)),
+                      bg_workflows_r=(list(), list(), ('wf_2e', 'outer')),
+                      pbox_r=(False, True, False),
+                      rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', xlim=None):
+    """
+    Composite figure showing RSLC quantile functions (1st col) and marginals (2nd col).
+
+    Parameters
+    ----------
+    workflows_r : list of list of str
+        List of lists containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, with each list
+        corresponding to a different row of figure (indicated by _r in parameter name).
+        Default is (('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_2e',)).
+    bg_workflows_r : list of list of str
+        List of lists containing workflows to show in lighter colour in background.
+        Default is (list(), list(), ('wf_2e', 'outer')).
+    pbox_r : list of bool
+        When True, plot p-box. Default is (False, True, False).
+    rate : bool
+        If True, use RSLC rate. If False (default), use RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    xlim : list or None
+        x-axis range. Default is None.
+
+    Returns
+    -------
+    fig: figure
+    axs: array of Axes
+    """
+    # Create Figure and Axes
+    nrows = len(workflows_r)
+    fig, axs = plt.subplots(nrows, 2, figsize=(9, 3*nrows), sharex=False, sharey='col', tight_layout=True)
+    # Loop over rows
+    for r in range(nrows):
+        workflows = workflows_r[r]
+        bg_workflows = bg_workflows_r[r]
+        pbox = pbox_r[r]
+        # 1st column: quantile functions
+        ax = axs[r, 0]
+        plot_rslc_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
+                      rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
+        # 2nd column: marginals
+        ax = axs[r, 1]
+        plot_rslc_marginals(workflows=workflows, bg_workflows=bg_workflows,
+                            rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
+    # Customise figure
+    for i, ax in enumerate(axs.flatten()):
+        ax.set_title(f' ({chr(97+i)})', y=1.0, pad=-4, va='top', loc='left')
+        if xlim:
+            ax.set_xlim(xlim)
+    return fig, axs
 
 
 @cache
