@@ -224,8 +224,16 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
     # Sample uniform distribution
     rng = np.random.default_rng(12345)
     uniform_n = rng.uniform(size=n_samples)
+    # For p-box outer bounds, correct values near undefined median
+    if workflow == 'outer':
+        uniform_n[(uniform_n > 0.49) & (uniform_n <= 0.50)] = 0.49
+        uniform_n[(uniform_n > 0.50) & (uniform_n < 0.51)] = 0.51
+        qf_da = qf_da.dropna(dim='quantiles')
     # Transform these samples to marginal distribution samples by interpolation of quantile function
     marginal_n = qf_da.interp(quantiles=uniform_n).data
+    # Check: are there any NaNs?
+    if np.any(np.isnan(marginal_n)):
+        print('Warning: NaNs found in marginal_n.')
     # Plot diagnostic plots?
     if plot:
         fig, axs = plt.subplots(1, 2, figsize=(8, 4), constrained_layout=True)
