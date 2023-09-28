@@ -102,7 +102,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     Returns
     -------
     qf_da : xarray DataArray
-        DataArray of RSLC quantiles in mm or mm/yr for different probability levels.
+        DataArray of RSLC quantiles in m or mm/yr for different probability levels.
     """
     # Find gauge_id for location
     gauge_info = get_gauge_info(gauge=gauge)
@@ -123,6 +123,10 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
             qf_da = xr.open_dataset(in_fn)['sea_level_change'].sel(years=year, locations=gauge_id)
         else:
             qf_da = xr.open_dataset(in_fn)['sea_level_change_rate'].sel(years=year, locations=gauge_id)
+        # Change units from mm to m
+        if not rate:
+            qf_da = qf_da / 1000.
+            qf_da.attrs['units'] = 'm'
     # Case 2: lower or upper bound of low-confidence p-box
     elif workflow in ['lower', 'upper']:
         # Contributing workflows (https://doi.org/10.5194/egusphere-2023-14)
@@ -290,7 +294,7 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     if rate:
         ax.set_xlabel(f'RSLC rate, mm/yr')
     else:
-        ax.set_xlabel(f'RSLC, mm')
+        ax.set_xlabel(f'RSLC, m')
     return ax
 
 
@@ -338,7 +342,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     if rate:
         ax.set_xlabel(f'RSLC rate, mm/yr')
     else:
-        ax.set_xlabel(f'RSLC, mm')
+        ax.set_xlabel(f'RSLC, m')
     return ax
 
 
