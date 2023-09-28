@@ -36,8 +36,8 @@ WF_COLOR_DICT = {'wf_1e': 'lavender', 'wf_1f': 'lavender',  # colours to use whe
                  'wf_3e': 'darkorange', 'wf_3f': 'darkorange',
                  'wf_4': 'darkred',
                  'lower': '0.5', 'upper': '0.5',
-                 'outer': 'red', 'effective_0.5': 'cyan',
-                 'fusion_2e': 'darkblue', 'fusion_2f': 'darkblue', 'fusion_1e': 'blue'}
+                 'outer': 'red', 'effective_0.5': 'magenta',
+                 'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
 
 
 def get_watermark():
@@ -382,18 +382,24 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     """
     # Create Figure and Axes
     nrows = len(workflows_r)
-    fig, axs = plt.subplots(nrows, 2, figsize=(9, 3*nrows), sharex=False, sharey='col', tight_layout=True)
+    fig, axs = plt.subplots(nrows, 2, figsize=(9, 3*nrows+0.3), sharex=False, sharey='col', tight_layout=True)
     # Loop over rows
     for r in range(nrows):
         workflows = workflows_r[r]
         bg_workflows = bg_workflows_r[r]
         pbox = pbox_r[r]
         # 1st column: quantile functions
-        ax = axs[r, 0]
+        try:
+            ax = axs[r, 0]
+        except IndexError:  # IndexError is encountered if only single row
+            ax = axs[0]
         plot_rslc_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
                       rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
         # 2nd column: marginals
-        ax = axs[r, 1]
+        try:
+            ax = axs[r, 1]
+        except IndexError:
+            ax = axs[1]
         plot_rslc_marginals(workflows=workflows, bg_workflows=bg_workflows,
                             rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
     # Customise figure
