@@ -31,12 +31,12 @@ plt.rcParams['grid.color'] = '0.95'
 
 # Constants
 IN_BASE = Path.cwd() / 'data'  # base directory of input data
-WF_COLOR_DICT = {'wf_1e': 'lavender', 'wf_1f': 'lavender',  # colours to use when plotting different workflows
-                 'wf_2e': 'greenyellow', 'wf_2f': 'greenyellow',
+WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when plotting different workflows
+                 'wf_2e': 'olive', 'wf_2f': 'olive',
                  'wf_3e': 'darkorange', 'wf_3f': 'darkorange',
                  'wf_4': 'darkred',
                  'lower': '0.5', 'upper': '0.5',
-                 'outer': 'red', 'effective_0.5': 'magenta',
+                 'outer': 'darkmagenta', 'effective_0.5': 'hotpink',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
 
 
@@ -299,7 +299,7 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
 
 
 def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
-                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', ax=None):
+                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', threshold=1., ax=None):
     """
     Plot marginal distributions corresponding to projections of total RSLC.
 
@@ -318,6 +318,8 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
         Year. Default is 2100.
     gauge : int or str
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    threshold : float
+        Threshold used for calculating probability of exceedance.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
     Returns
@@ -329,14 +331,18 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
         fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
     # Loop over background workflows
     for workflow in bg_workflows:
-        # Get marginal samples and plot
+        # Get marginal samples, calculate probability of exceeding threshold, and plot
         marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, label=workflow, linestyle='--',  ax=ax)
+        p_threshold = (marginal_n > threshold).mean()
+        label = f'{workflow} ({p_threshold:.0%})'
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, label=label, linestyle='--',  ax=ax)
     # Loop over workflows
     for workflow in workflows:
-        # Get marginal samples and plot
+        # Get marginal samples, calculate probability of exceeding threshold, and plot
         marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=workflow, ax=ax)
+        p_threshold = (marginal_n > threshold).mean()
+        label = f'{workflow} ({p_threshold:.0%})'
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=label, ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
     if rate:
