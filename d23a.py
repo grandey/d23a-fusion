@@ -299,7 +299,7 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
 
 
 def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
-                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', threshold=1., ax=None):
+                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', threshold=1.5, ax=None):
     """
     Plot marginal distributions corresponding to projections of total RSLC.
 
@@ -329,6 +329,8 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     # Create figure if ax is None
     if not ax:
         fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+    # Add line showing threshold
+    ax.axvline(threshold, color='0.5', linestyle=':')
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get marginal samples, calculate probability of exceeding threshold, and plot
