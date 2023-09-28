@@ -36,8 +36,8 @@ WF_COLOR_DICT = {'wf_1e': 'lavender', 'wf_1f': 'lavender',  # colours to use whe
                  'wf_3e': 'darkorange', 'wf_3f': 'darkorange',
                  'wf_4': 'darkred',
                  'lower': '0.5', 'upper': '0.5',
-                 'outer': 'red', 'effective w=0.5': 'cyan',
-                 'fusion': 'darkblue'}
+                 'outer': 'red', 'effective_0.5': 'cyan',
+                 'fusion_2e': 'darkblue', 'fusion_2f': 'darkblue', 'fusion_1e': 'blue'}
 
 
 def get_watermark():
@@ -87,7 +87,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     ----------
     workflow : str
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
-        effective distribution (e.g. 'effective w=0.5'), or fusion (e.g. 'fusion').
+        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_2e').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -157,16 +157,13 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
         upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Get constant weight w
-        w = float(workflow.split()[-1][2:])
+        w = float(workflow.split('_')[-1])
         # Derive effective distribution
         qf_da = w * upper_da + (1 - w) * lower_da
     # Case 5: fusion distribution
-    elif workflow == 'fusion':
-        # Get data for preferred workflow (wf_2e/wf_2f) and outer bound of p-box
-        if not rate:
-            wf = 'wf_2e'  # preferred projection near median
-        else:
-            wf = 'wf_2f'
+    elif 'fusion' in workflow:
+        # Get data for preferred workflow and outer bound of p-box
+        wf = f'wf_{workflow.split("_")[-1]}'  # preferred workflow
         pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_rslc_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
@@ -199,7 +196,7 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
     ----------
     workflow : str
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
-        effective distribution (e.g. 'effective w=0.5'), or fusion (e.g. 'fusion').
+        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_2e').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
