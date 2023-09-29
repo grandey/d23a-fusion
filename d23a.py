@@ -369,6 +369,73 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     return ax
 
 
+def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
+                         rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', annotations=True, ax=None):
+    """
+    Plot violinplot of marginal distributions corresponding to projections of total RSLC.
+
+    Parameters
+    ----------
+    workflows : list of str
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions.
+        Default is ('wf_2e', 'fusion_2e', 'outer').
+    rate : bool
+        If True, use RSLC rate. If False (default), use RSLC.
+    scenario : str
+        Options are 'ssp126' and 'ssp585' (default).
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    annotations : bool
+        If True (default), add default annotations.
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(5, 5), constrained_layout=True)
+    # Loop over workflows, sample marginal, and save to DataFrame
+    samples_df = pd.DataFrame()  # DataFrame to hold samples from different marginals
+    for workflow in workflows:
+        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        samples_df[workflow] = marginal_n
+    # Violinplot
+    sns.violinplot(data=samples_df, cut=0, palette=WF_COLOR_DICT, orient='h', width=0.6, inner=None, ax=ax)
+    # Percentiles, based on quantile function
+    for i, workflow in enumerate(workflows):
+        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        for p_str, linestyle in {'99.5th': (0, (1, 4)), '95th': 'dotted', '83rd': 'dashed', '50th': 'dashdot'}.items():
+            p = float(p_str[:-2])
+            val = qf_da.sel(quantiles=p/100).data  # percentile value
+            if i == 0:  # label each percentile only once in legend
+                label = p_str
+            else:
+                label = None
+            ax.plot([val, val], [i-0.35, i+0.35], color='0.2', linestyle=linestyle, label=label)
+    # Annotations (assuming combination & order of workflows follows default)
+    if annotations:
+        for p, y, text in zip([50, 99.5], [0.5, 1.5],
+                              [f'Median:\n{workflows[1]}$\sim${workflows[0]}',
+                               f'Upper tail:\n{workflows[1]}$\sim${workflows[2]}']):
+            qf_da = get_rslc_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
+            val = qf_da.sel(quantiles=p/100).data
+            ax.annotate(text, [val, y], ha='center', va='center', color=WF_COLOR_DICT[workflows[1]])
+    # Customise figure
+    ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
+    if rate:
+        ax.set_xlabel(f'RSLC rate, mm/yr')
+    else:
+        ax.set_xlabel(f'RSLC, m')
+    ax.tick_params(axis='both', labelsize='large')
+    for label in ax.get_yticklabels():
+        label.set_fontweight('bold')
+    return ax
+
+
 def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_2e',)),
                       bg_workflows_r=(list(), list(), ('wf_2e', 'outer')),
                       pbox_r=(False, True, False),
