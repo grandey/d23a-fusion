@@ -38,6 +38,10 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'lower': '0.5', 'upper': '0.5',
                  'outer': 'darkmagenta', 'effective_0.5': 'hotpink',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
+FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
+F_NUM = itertools.count(1)  # main figures counter
+S_NUM = itertools.count(1)  # supplementary figures counter
+O_NUM = itertools.count(1)  # other figures counter
 
 
 def get_watermark():
@@ -543,6 +547,39 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
         if xlim:
             ax.set_xlim(xlim)
     return fig, axs
+
+
+def name_save_fig(fig,
+                  fso='f',  # figure type, either 'f' (main), 's' (supp), or 'o' (other)
+                  exts=('pdf', 'png'),  # extension(s) to use
+                  close=False):
+    """Name & save a figure, and increase counter."""
+    # Name based on counter, then update counter (in preparation for next figure)
+    if fso == 'f':
+        fig_name = f'fig{next(F_NUM):02}'
+    elif fso == 's':
+        fig_name = f's{next(S_NUM):02}'
+    else:
+        fig_name = f'o{next(O_NUM):02}'
+    # File location based on extension(s)
+    for ext in exts:
+        # Get constrained layout pads (to preserve values after saving fig)
+        w_pad, h_pad, _, _ = fig.get_constrained_layout_pads()
+        # Sub-directory
+        sub_dir = FIG_DIR.joinpath(f'{fso}_{ext}')
+        sub_dir.mkdir(exist_ok=True)
+        # Save
+        fig_path = sub_dir.joinpath(f'{fig_name}.{ext}')
+        fig.savefig(fig_path)
+        # Print file name and size
+        fig_size = fig_path.stat().st_size / 1024 / 1024  # bytes -> MB
+        print(f'Written {fig_name}.{ext} ({fig_size:.2f} MB)')
+        # Reset constrained layout pads to previous values
+        fig.set_constrained_layout_pads(w_pad=w_pad, h_pad=h_pad)
+        # Suppress output in notebook?
+    if close:
+        plt.close()
+    return fig_name
 
 
 @cache
