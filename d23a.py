@@ -271,6 +271,7 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
+
     Returns
     -------
     ax : Axes
@@ -330,6 +331,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
         Threshold used for calculating probability of exceedance. Default is None.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
+
     Returns
     -------
     ax : Axes
@@ -391,6 +393,7 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
         If True (default), add default annotations.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
+
     Returns
     -------
     ax : Axes
@@ -433,6 +436,48 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
     ax.tick_params(axis='both', labelsize='large')
     for label in ax.get_yticklabels():
         label.set_fontweight('bold')
+    return ax
+
+
+def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upper'), rate=False,
+                            scenarios=('ssp126', 'ssp585'), year=2100, gauge='TANJONG_PAGAR', ax=None):
+    """
+    Plot heatmap table showing probability of exceeding an RSLC threshold.
+
+    Parameters
+    ----------
+    threshold : float
+        Threshold to use when calculating probability of exceedance.
+    workflows : list of str
+        List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, for table columns.
+        Default is ('lower', 'upper', 'fusion_2e').
+    rate : bool
+        If True, use RSLC rate. If False (default), use RSLC.
+    scenarios : list str
+        List containing scenarios, for table rows. Default is ('ssp126', 'ssp585').
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(3, 1), constrained_layout=True)
+    # For each combination of workflow and scenario, save probability of exceeding threshold to DataFrame
+    p_exceed_df = pd.DataFrame()
+    for workflow in workflows:
+        for scenario in scenarios:
+            marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+            p_exceed = (marginal_n > threshold).mean()
+            p_exceed_df.loc[scenario, workflow] = p_exceed
+    # Plot heatmap
+    sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1., ax=ax)
     return ax
 
 
