@@ -38,6 +38,13 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'lower': '0.5', 'upper': '0.5',
                  'outer': 'darkmagenta', 'effective_0.5': 'hotpink',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
+WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use when labelling workflows in legends
+                 'wf_2e': 'Workflow 2e', 'wf_2f': 'Workflow 2f',
+                 'wf_3e': 'Workflow 3e', 'wf_3f': 'Workflow 3f',
+                 'wf_4': 'Workflow 4',
+                 'lower': 'Lower bound', 'upper': 'Upper bound',
+                 'outer': 'Outer bound', 'effective_0.5': 'Effective distribution',
+                 'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
 S_NUM = itertools.count(1)  # supplementary figures counter
@@ -294,12 +301,13 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     for workflow in bg_workflows:
         # Get quantile function data and plot
         qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, label=workflow, linestyle='--')
+        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, linestyle='--',
+                label=WF_LABEL_DICT[workflow])
     # Loop over workflows
     for workflow in workflows:
         # Get quantile function data and plot
         qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=workflow)
+        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=WF_LABEL_DICT[workflow])
     # Customise plot
     ax.legend(loc='lower right')
     ax.set_ylim([0, 1])
@@ -355,7 +363,8 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
             label = f'{workflow} ({p_threshold:.0%})'
         else:
             label = workflow
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, label=label, linestyle='--',  ax=ax)
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, linestyle='--',
+                    label=WF_LABEL_DICT[workflow], ax=ax)
     # Loop over workflows
     for workflow in workflows:
         # Get marginal samples, calculate probability of exceeding threshold, and plot
@@ -365,7 +374,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
             label = f'{workflow} ({p_threshold:.0%})'
         else:
             label = workflow
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=label, ax=ax)
+        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
     if rate:
