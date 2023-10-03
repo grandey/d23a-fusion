@@ -45,6 +45,7 @@ WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use
                  'lower': 'Lower bound', 'upper': 'Upper bound',
                  'outer': 'Outer bound', 'effective_0.5': 'Effective distribution',
                  'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e'}
+SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
 S_NUM = itertools.count(1)  # supplementary figures counter
@@ -482,16 +483,21 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upp
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(3, 1), constrained_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(5, 1), constrained_layout=True)
     # For each combination of workflow and scenario, save probability of exceeding threshold to DataFrame
     p_exceed_df = pd.DataFrame()
     for workflow in workflows:
         for scenario in scenarios:
             marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
             p_exceed = (marginal_n > threshold).mean()
-            p_exceed_df.loc[scenario, WF_LABEL_DICT[workflow]] = p_exceed
+            p_exceed_df.loc[SSP_LABEL_DICT[scenario], WF_LABEL_DICT[workflow]] = p_exceed
     # Plot heatmap
-    sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1., ax=ax)
+    sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1.,
+                annot_kws={'weight': 'bold'}, ax=ax)
+    # Customise plot
+    ax.tick_params(top=False, bottom=False, left=False, right=False, rotation=0)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight('bold')
     return ax
 
 
@@ -586,7 +592,7 @@ def name_save_fig(fig,
         print(f'Written {fig_name}.{ext} ({fig_size:.2f} MB)')
         # Reset constrained layout pads to previous values
         fig.set_constrained_layout_pads(w_pad=w_pad, h_pad=h_pad)
-        # Suppress output in notebook?
+    # Suppress output in notebook?
     if close:
         plt.close()
     return fig_name
