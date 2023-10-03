@@ -413,7 +413,7 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(5, 5), constrained_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(6, 5), constrained_layout=True)
     # Loop over workflows, sample marginal, and save to DataFrame
     samples_df = pd.DataFrame()  # DataFrame to hold samples from different marginals
     for workflow in workflows:
@@ -435,13 +435,14 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
     # Annotations (assuming combination & order of workflows follows default)
     if annotations:
         for p, y, text in zip([50, 99.5], [0.5, 1.5],
-                              [f'Median:\n{workflows[1]}$\sim${workflows[0]}',
-                               f'Upper tail:\n{workflows[1]}$\sim${workflows[2]}']):
+                              [f'Median:\n{WF_LABEL_DICT[workflows[1]]}$\sim${WF_LABEL_DICT[workflows[0]]}',
+                               f'Upper tail:\n{WF_LABEL_DICT[workflows[1]]}$\sim${WF_LABEL_DICT[workflows[2]]}']):
             qf_da = get_rslc_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
             val = qf_da.sel(quantiles=p/100).data
             ax.annotate(text, [val, y], ha='center', va='center', color=WF_COLOR_DICT[workflows[1]])
-    # Customise figure
+    # Customise plot
     ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
+    ax.set_yticklabels([WF_LABEL_DICT[workflow] for workflow in workflows])
     if rate:
         ax.set_xlabel(f'RSLC rate, mm/yr')
     else:
@@ -488,7 +489,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upp
         for scenario in scenarios:
             marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
             p_exceed = (marginal_n > threshold).mean()
-            p_exceed_df.loc[scenario, workflow] = p_exceed
+            p_exceed_df.loc[scenario, WF_LABEL_DICT[workflow]] = p_exceed
     # Plot heatmap
     sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1., ax=ax)
     return ax
