@@ -26,6 +26,8 @@ plt.rcParams['legend.fontsize'] = 'large'
 plt.rcParams['axes.titleweight'] = 'bold'  # titles for subplots
 plt.rcParams['figure.titleweight'] = 'bold'  # suptitle
 plt.rcParams['figure.titlesize'] = 'x-large'  # suptitle
+plt.rcParams['axes.grid'] = True
+plt.rcParams['axes.axisbelow'] = True  # grid should be behind other elements
 plt.rcParams['grid.color'] = '0.95'
 
 
