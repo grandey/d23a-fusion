@@ -39,6 +39,8 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'wf_4': 'darkred',
                  'lower': '0.5', 'upper': '0.5',
                  'outer': 'darkmagenta', 'effective_0.5': 'hotpink',
+                 'mean_1e+2e': 'turquoise', 'mean_1f+2f': 'turquoise',
+                 'fusion_1e+2e': 'teal', 'fusion_1f+2f': 'teal',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
 WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use when labelling workflows in legends
                  'wf_2e': 'Workflow 2e', 'wf_2f': 'Workflow 2f',
@@ -46,6 +48,8 @@ WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use
                  'wf_4': 'Workflow 4',
                  'lower': 'Lower bound', 'upper': 'Upper bound',
                  'outer': 'Outer bound', 'effective_0.5': 'Effective distribution',
+                 'mean_1e+2e': 'Medium confidence mean', 'mean_1f+2f': 'Medium confidence mean',
+                 'fusion_1e+2e': 'Fusion', 'fusion_1f+2f': 'Fusion',
                  'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e'}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
@@ -101,7 +105,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     ----------
     workflow : str
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
-        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_2e').
+        effective distribution (e.g. 'effective_0.5'), mean (e.g. 'mean_1e+2e'), or fusion (e.g. 'fusion_1e+2e').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -178,10 +182,21 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         w = float(workflow.split('_')[-1])
         # Derive effective distribution
         qf_da = w * upper_da + (1 - w) * lower_da
-    # Case 5: fusion distribution
+    # Case 5: "mean" quantile function
+    elif 'mean' in workflow:
+        # Get data for two workflows
+        wf1, wf2 = [f'wf_{s}' for s in workflow.split('_')[-1].split('+')]
+        wf1_da = get_rslc_qf(workflow=wf1, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        wf2_da = get_rslc_qf(workflow=wf2, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        # Derive mean distribution
+        qf_da = (wf1_da + wf2_da) / 2.
+    # Case 6: fusion distribution
     elif 'fusion' in workflow:
         # Get data for preferred workflow and outer bound of p-box
-        wf = f'wf_{workflow.split("_")[-1]}'  # preferred workflow
+        if '+' in workflow:  # use mean for preferred workflow
+            wf = f'mean_{workflow.split("_")[-1]}'
+        else:  # use single workflow for preferred workflow
+            wf = f'wf_{workflow.split("_")[-1]}'
         pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_rslc_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
