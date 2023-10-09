@@ -296,6 +296,40 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
     return marginal_n
 
 
+def plot_fusion_weights(ax=None):
+    """
+    Plot weighting function used for fusion.
+
+    Parameters
+    -----
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+
+    Returns
+    -------
+    ax : Axes.
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+    # Get DataArray containing weighting function
+    w_da = get_fusion_weights()
+    # Plot shaded regions
+    ax.fill_betweenx(w_da.quantiles, 0, w_da, color=WF_COLOR_DICT['mean_1e+2e'], alpha=0.2)
+    ax.fill_betweenx(w_da.quantiles, 1, w_da, color=WF_COLOR_DICT['outer'], alpha=0.2)
+    # Annotate, label axes etc
+    ax.text(0.35, 0.5, WF_LABEL_DICT['mean_1e+2e'],
+            fontsize='large', horizontalalignment='center', verticalalignment='center', fontweight='bold')
+    for y in [0.85, 0.15]:
+        ax.text(0.9, y, WF_LABEL_DICT['outer'],
+                fontsize='large', horizontalalignment='right', verticalalignment='center', fontweight='bold')
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1])
+    ax.set_xlabel('Weight for contribution to fusion')
+    ax.set_ylabel('Probability')
+    return ax
+
+
 def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
                   rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', ax=None):
     """
