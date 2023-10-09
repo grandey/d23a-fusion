@@ -64,6 +64,7 @@ def get_watermark():
     return watermark(machine=True, conda=True, python=True, packages=packages)
 
 
+@cache
 def get_gauge_info(gauge='TANJONG_PAGAR'):
     """
     Get name, ID, latitude, and longitude of tide gauge, using location_list.lst
@@ -94,6 +95,25 @@ def get_gauge_info(gauge='TANJONG_PAGAR'):
     except IndexError:
         raise ValueError(f"gauge='{gauge}' not found.")
     return gauge_info
+
+
+@cache
+def get_fusion_weights():
+    """
+    Return triangular weighting function for fusion.
+
+    Returns
+    -------
+    w_da : xarray DataArray
+        DataArray of weights for preferred workflow, with weights depending on probability
+    """
+    # Get a quantile function corresponding to a projection of total RSLC, using default parameters
+    w_da = get_rslc_qf().copy()  # use as template for w_da, with data to be updated
+    # Update data to triangular weighting function, with weights depending on probability
+    w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
+    # Rename
+    w_da = w_da.rename('weights')
+    return w_da
 
 
 @cache
@@ -200,9 +220,9 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_rslc_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
-        w_p = 1 - np.abs(pref_da.quantiles - 0.5) * 2
+        w_da = get_fusion_weights()
         # Derive fusion distribution; rely on automatic broadcasting/alignment
-        qf_da = w_p * pref_da + (1 - w_p) * outer_da
+        qf_da = w_da * pref_da + (1 - w_da) * outer_da
         # Correct median (which is currently nan due to nan in outer_da)
         med_idx = len(qf_da) // 2  # index corresponding to median
         qf_da[med_idx] = pref_da[med_idx]  # median follows preferred workflow
