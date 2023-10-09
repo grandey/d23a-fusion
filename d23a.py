@@ -47,8 +47,8 @@ WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use
                  'wf_3e': 'Workflow 3e', 'wf_3f': 'Workflow 3f',
                  'wf_4': 'Workflow 4',
                  'lower': 'Lower bound', 'upper': 'Upper bound',
-                 'outer': 'Outer bound', 'effective_0.5': 'Effective distribution',
-                 'mean_1e+2e': 'Medium confidence mean', 'mean_1f+2f': 'Medium confidence mean',
+                 'outer': 'Outer bound', 'effective_0.5': 'Effective',
+                 'mean_1e+2e': 'Med.-conf. mean', 'mean_1f+2f': 'Med.-conf. mean',
                  'fusion_1e+2e': 'Fusion', 'fusion_1f+2f': 'Fusion',
                  'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e'}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
@@ -229,7 +229,7 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
     ----------
     workflow : str
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
-        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_2e').
+        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_1e+2e').
     rate : bool
         If True, return RSLC rate. If False (default), return RSLC.
     scenario : str
@@ -402,7 +402,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     return ax
 
 
-def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
+def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
                          rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', annotations=True, ax=None):
     """
     Plot violinplot of marginal distributions corresponding to projections of total RSLC.
@@ -411,7 +411,7 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
     ----------
     workflows : list of str
         List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions.
-        Default is ('wf_2e', 'fusion_2e', 'outer').
+        Default is ('wf_2e', 'fusion_1e+2e', 'outer').
     rate : bool
         If True, use RSLC rate. If False (default), use RSLC.
     scenario : str
@@ -471,7 +471,7 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_2e', 'outer'),
     return ax
 
 
-def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upper'), rate=False,
+def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
                             scenarios=('ssp126', 'ssp585'), year=2100, gauge='TANJONG_PAGAR', ax=None):
     """
     Plot heatmap table showing probability of exceeding an RSLC threshold.
@@ -482,7 +482,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upp
         Threshold to use when calculating probability of exceedance.
     workflows : list of str
         List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, for table columns.
-        Default is ('lower', 'upper', 'fusion_2e').
+        Default is ('lower', 'fusion_1e+2e', 'upper').
     rate : bool
         If True, use RSLC rate. If False (default), use RSLC.
     scenarios : list str
@@ -518,8 +518,8 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_2e', 'upp
     return ax
 
 
-def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_2e',)),
-                      bg_workflows_r=(list(), list(), ('wf_2e', 'outer')),
+def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)),
+                      bg_workflows_r=(list(), list(), ('mean_1e+2e', 'outer')),
                       pbox_r=(False, True, False),
                       rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', xlim=None):
     """
@@ -530,10 +530,10 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     workflows_r : list of list of str
         List of lists containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, with each list
         corresponding to a different row of figure (indicated by _r in parameter name).
-        Default is (('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_2e',)).
+        Default is (('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)).
     bg_workflows_r : list of list of str
         List of lists containing workflows to show in lighter colour in background.
-        Default is (list(), list(), ('wf_2e', 'outer')).
+        Default is (list(), list(), ('mean_1e+2e', 'outer')).
     pbox_r : list of bool
         When True, plot p-box. Default is (False, True, False).
     rate : bool
