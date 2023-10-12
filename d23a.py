@@ -42,15 +42,15 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'mean_1e+2e': 'turquoise', 'mean_1f+2f': 'turquoise',
                  'fusion_1e+2e': 'teal', 'fusion_1f+2f': 'teal',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
-WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # names to use when labelling workflows in legends
-                 'wf_2e': 'Workflow 2e', 'wf_2f': 'Workflow 2f',
-                 'wf_3e': 'Workflow 3e', 'wf_3f': 'Workflow 3f',
-                 'wf_4': 'Workflow 4',
-                 'lower': 'Lower bound', 'upper': 'Upper bound',
-                 'outer': 'Outer bound', 'effective_0.5': 'Effective',
-                 'mean_1e+2e': 'Med.-conf. mean', 'mean_1f+2f': 'Med.-conf. mean',
-                 'fusion_1e+2e': 'Fusion', 'fusion_1f+2f': 'Fusion',
-                 'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e'}
+WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',  # workflow labels in legends
+                 'wf_2e': '$W_2$ (workflow 2e)', 'wf_2f': '$W_2$ (workflow 2f)',
+                 'wf_3e': '$W_3$ (workflow 3e)', 'wf_3f': '$W_3$ (workflow 3f)',
+                 'wf_4': '$W_4$ (workflow 4)',
+                 'lower': '$L$ (lower bound)', 'upper': '$U$ (upper bound)',
+                 'outer': '$B$ (outer bound)', 'effective_0.5': '$E_{0.5}$ (effective)',
+                 'mean_1e+2e': '$M$ (med. conf. mean)', 'mean_1f+2f': '$M$ (med.-conf. mean)',
+                 'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
+                 'fusion_2e': '$F_2$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e'}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
