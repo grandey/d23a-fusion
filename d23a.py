@@ -506,9 +506,11 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
             ax.plot([val, val], [i-0.35, i+0.35], color='0.2', linestyle=linestyle, label=label)
     # Annotations (assuming combination & order of workflows follows default)
     if annotations:
-        for p, y, text in zip([50, 99.5], [0.5, 1.5],
-                              [f'Median:\n{WF_LABEL_DICT[workflows[1]]}$\sim${WF_LABEL_DICT[workflows[0]]}',
-                               f'Upper tail:\n{WF_LABEL_DICT[workflows[1]]}$\sim${WF_LABEL_DICT[workflows[2]]}']):
+        for p, y, text in zip(
+                [50, 99.5], [0.5, 1.5],
+                [f'Median:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[0]].split()[0]}',
+                 f'Upper tail:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[2]].split()[0]}']
+                ):
             qf_da = get_rslc_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
             val = qf_da.sel(quantiles=p/100).data
             ax.annotate(text, [val, y], ha='center', va='center', color=WF_COLOR_DICT[workflows[1]])
