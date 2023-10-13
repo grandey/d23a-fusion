@@ -567,6 +567,10 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     # Plot heatmap
     sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1.,
                 annot_kws={'weight': 'bold'}, ax=ax)
+    # Change colorbar labels to percentage
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([0., 1.])
+    cbar.set_ticklabels(['0%', '100%'])
     # Customise plot
     ax.tick_params(top=False, bottom=False, left=False, right=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
