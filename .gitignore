@@ -5,10 +5,10 @@ temp.*
 temp/
 .idea
 .DS_Store
-o_png/
 *.pdf
 *pdf
 *~
+~$*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
