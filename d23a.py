@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import seaborn as sns
-import warnings
 from watermark import watermark
 import xarray as xr
 
