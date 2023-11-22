@@ -555,7 +555,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(5, 1), constrained_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(5, 1), tight_layout=True)
     # For each combination of workflow and scenario, save probability of exceeding threshold to DataFrame
     p_exceed_df = pd.DataFrame()
     for workflow in workflows:
@@ -574,6 +574,62 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     ax.tick_params(top=False, bottom=False, left=False, right=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
+    return ax
+
+
+def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th'),
+                             workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
+                                        'fusion_1e+2e'),
+                             rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', fmt='.2f', ax=None):
+    """
+    Plot heatmap table showing percentiles of quantile functions.
+
+    Parameters
+    ----------
+    percentiles : tuple of str
+        List containing percentiles, for table columns. Default is ('50th', '17th', '83rd', '5th', '95th').
+    workflows : tuple of str
+        List containing workflows etc, for table rows.
+        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
+    rate : bool
+        If True, use RSLC rate. If False (default), use RSLC.
+    scenario : str
+        Scenario. Default is 'ssp585'.
+    year : int
+        Year. Default is 2100.
+    gauge : int or str
+        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    fmt : str.
+        Format string to use for values. Default is '.2f'.
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(len(percentiles), 0.5*len(workflows)), tight_layout=True)
+    # For each combination of workflow and percentile, save percentile value to DataFrame
+    val_df = pd.DataFrame()
+    for workflow in workflows:  # rows
+        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        for perc_str in percentiles:  # columns
+            perc_flt = float(perc_str[:-2])  # string -> float (e.g. '50th' -> 50.)
+            val = qf_da.sel(quantiles=perc_flt/100).data  # percentile value
+            val_df.loc[WF_LABEL_DICT[workflow], perc_str] = val
+    # Plot heatmap
+    sns.heatmap(val_df, annot=True, fmt=fmt, cmap='plasma_r', cbar=False, annot_kws={'weight': 'bold'}, ax=ax)
+    # Customise plot
+    ax.grid(False)
+    ax.tick_params(top=False, bottom=False, left=False, right=False, labeltop=True, labelbottom=False, rotation=0)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight('bold')
+    if rate:
+        ax.set_title('Percentiles of RSLC rate, mm/yr\n')
+    else:
+        ax.set_title('Percentiles of RSLC, m\n')
     return ax
 
 
