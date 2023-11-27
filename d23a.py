@@ -580,7 +580,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
 def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
                                         'fusion_1e+2e'),
-                             rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', fmt='.2f', ax=None):
+                             rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', fmt='.1f', ax=None):
     """
     Plot heatmap table showing percentiles of quantile functions.
 
@@ -600,7 +600,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     gauge : int or str
         ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
     fmt : str.
-        Format string to use for values. Default is '.2f'.
+        Format string to use for values. Default is '.1f'.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
