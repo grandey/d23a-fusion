@@ -528,6 +528,9 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     ax.tick_params(axis='both', labelsize='large')
     for label in ax.get_yticklabels():
         label.set_fontweight('bold')
+    if gauge is not None:
+        ax.text(1, 1.02, f'Location: {gauge.replace("_", " ").title()}',
+                ha='right', va='bottom', fontsize='large', transform=ax.transAxes)
     return ax
 
 
@@ -635,6 +638,9 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
         ax.set_title('Percentiles of rate of sea-level rise, mm/yr\n')
     else:
         ax.set_title('Percentiles of sea-level rise, m\n')
+    if gauge is not None:
+        ax.text(-0.25, 1.1, f'Location:\n{gauge.replace("_", " ").title()}',
+                ha='center', va='bottom', transform=ax.transAxes)
     return ax
 
 
@@ -699,6 +705,10 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
         ax.set_title(f' ({chr(97+i)})', y=1.0, pad=-4, va='top', loc='left')
         if xlim:
             ax.set_xlim(xlim)
+    if gauge is not None:
+        ax = axs.flatten()[1]
+        ax.text(1, 1.05, f'Location: {gauge.replace("_", " ").title()}',
+                ha='right', va='bottom', fontsize='large', transform=ax.transAxes)
     return fig, axs
 
 
