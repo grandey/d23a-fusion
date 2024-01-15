@@ -3,7 +3,7 @@ d23a:
     Functions that support the analysis contained in the d23a-fusion repository.
 
 Author:
-    Benjamin S. Grandey, 2023.
+    Benjamin S. Grandey, 2023–2024.
 """
 
 from functools import cache
@@ -106,8 +106,8 @@ def get_fusion_weights():
     w_da : xarray DataArray
         DataArray of weights for preferred workflow, with weights depending on probability
     """
-    # Get a quantile function corresponding to a projection of total RSLC, using default parameters
-    w_da = get_rslc_qf().copy()  # use as template for w_da, with data to be updated
+    # Get a quantile function corresponding to a projection of total sea level, using default parameters
+    w_da = get_sl_qf().copy()  # use as template for w_da, with data to be updated
     # Update data to triangular weighting function, with weights depending on probability
     w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
     # Rename
@@ -116,9 +116,9 @@ def get_fusion_weights():
 
 
 @cache
-def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', plot=False):
+def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=None, plot=False):
     """
-    Return quantile function corresponding to a projection of total RSLC.
+    Return quantile function corresponding to a projection of total sea-level rise.
 
     Parameters
     ----------
@@ -126,40 +126,45 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
         effective distribution (e.g. 'effective_0.5'), mean (e.g. 'mean_1e+2e'), or fusion (e.g. 'fusion_1e+2e').
     rate : bool
-        If True, return RSLC rate. If False (default), return RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     plot : Bool
         Plot the result? Default is False.
 
     Returns
     -------
     qf_da : xarray DataArray
-        DataArray of RSLC quantiles in m or mm/yr for different probability levels.
+        DataArray of sea-level rise quantiles in m or mm/yr for different probability levels.
     """
-    # Find gauge_id for location
-    gauge_info = get_gauge_info(gauge=gauge)
-    gauge_id = gauge_info['gauge_id']
     # Case 1: single workflow, corresponding to one of the alternative projections
     if workflow in ['wf_1e', 'wf_1f', 'wf_2e', 'wf_2f', 'wf_3e', 'wf_3f', 'wf_4']:
-        if not rate:  # RSLC
-            in_dir = IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows' / workflow / scenario
-            in_fn = in_dir / 'total-workflow.nc'
-        else:  # RSLC rate
-            in_dir = IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows_rates' / workflow / scenario
-            in_fn = in_dir / 'total-workflow_rates.nc'
-        # Does input file exist?
-        if not in_fn.exists():
-            raise FileNotFoundError(in_fn)
-        # Read data
-        if not rate:
-            qf_da = xr.open_dataset(in_fn)['sea_level_change'].sel(years=year, locations=gauge_id)
+        # Find gauge_id for location
+        if gauge is None:
+            gauge_id = -1
         else:
+            gauge_info = get_gauge_info(gauge=gauge)
+            gauge_id = gauge_info['gauge_id']
+        # Read data
+        if rate:
+            if gauge is None:  # GMSL rate is not available in ar6.zip
+                raise ValueError('rate=True is incompatible with gauge=None.')
+            else:  # RSL rate
+                in_dir = (IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows_rates' / workflow
+                          / scenario)
+            in_fn = in_dir / 'total-workflow_rates.nc'
             qf_da = xr.open_dataset(in_fn)['sea_level_change_rate'].sel(years=year, locations=gauge_id)
+        else:
+            if gauge is None:  # GMSL
+                in_dir = IN_BASE / 'ar6' / 'global' / 'dist_workflows' / workflow / scenario
+            else:  # RSL
+                in_dir = IN_BASE / 'ar6-regional-distributions' / 'regional' / 'dist_workflows' / workflow / scenario
+            in_fn = in_dir / 'total-workflow.nc'
+            qf_da = xr.open_dataset(in_fn)['sea_level_change'].sel(years=year, locations=gauge_id)
         # Change units from mm to m
         if not rate:
             qf_da = qf_da / 1000.
@@ -174,7 +179,7 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
         # Get quantile function data for each of these workflows
         qf_da_list = []
         for wf in wf_list:
-            qf_da_list.append(get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge))
+            qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge))
         concat_da = xr.concat(qf_da_list, 'wf')
         # Find lower or upper bound
         if workflow == 'lower':
@@ -184,8 +189,8 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     # Case 3: Outer bound of p-box
     elif workflow == 'outer':
         # Get data for lower and upper p-box bounds
-        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        lower_da = get_sl_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_sl_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Derive outer bound
         qf_da = xr.concat([lower_da.sel(quantiles=slice(0, 0.5)),  # lower bound below median
                            upper_da.sel(quantiles=slice(0.500001, 1))],  # upper bound above median
@@ -195,8 +200,8 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     # Case 4: "effective" quantile function (Rohmer et al., 2019)
     elif 'effective' in workflow:
         # Get data for lower and upper p-box bounds
-        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        lower_da = get_sl_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_sl_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Get constant weight w
         w = float(workflow.split('_')[-1])
         # Derive effective distribution
@@ -205,8 +210,8 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
     elif 'mean' in workflow:
         # Get data for two workflows
         wf1, wf2 = [f'wf_{s}' for s in workflow.split('_')[-1].split('+')]
-        wf1_da = get_rslc_qf(workflow=wf1, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        wf2_da = get_rslc_qf(workflow=wf2, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        wf1_da = get_sl_qf(workflow=wf1, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        wf2_da = get_sl_qf(workflow=wf2, rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Derive mean distribution
         qf_da = (wf1_da + wf2_da) / 2.
     # Case 6: fusion distribution
@@ -216,8 +221,8 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
             wf = f'mean_{workflow.split("_")[-1]}'
         else:  # use single workflow for preferred workflow
             wf = f'wf_{workflow.split("_")[-1]}'
-        pref_da = get_rslc_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        outer_da = get_rslc_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        pref_da = get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        outer_da = get_sl_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
         w_da = get_fusion_weights()
         # Derive fusion distribution; rely on automatic broadcasting/alignment
@@ -239,10 +244,10 @@ def get_rslc_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gaug
 
 
 @cache
-def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR',
-                         n_samples=int(1e6), plot=False):
+def sample_sl_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=None, n_samples=int(1e6),
+                       plot=False):
     """
-    Sample marginal distribution corresponding to a projection of total RSLC.
+    Sample marginal distribution corresponding to a projection of total sea level.
 
     Parameters
     ----------
@@ -250,13 +255,13 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
         AR6 workflow (e.g. 'wf_1e', default), p-box bound ('lower', 'upper', 'outer'),
         effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_1e+2e').
     rate : bool
-        If True, return RSLC rate. If False (default), return RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     n_samples : int
         Number of samples. Default is int(1e6).
     plot : Bool
@@ -268,7 +273,7 @@ def sample_rslc_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2
         A one-dimensional array of randomly drawn samples.
     """
     # Read quantile function data
-    qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge, plot=False)
+    qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge, plot=False)
     # Sample uniform distribution
     rng = np.random.default_rng(12345)
     uniform_n = rng.uniform(size=n_samples)
@@ -329,10 +334,10 @@ def plot_fusion_weights(ax=None):
     return ax
 
 
-def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
-                  rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', ax=None):
+def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
+                rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot quantile functions corresponding to projections of total RSLC.
+    Plot quantile functions corresponding to projections of total sea level
 
     Parameters
     ----------
@@ -344,13 +349,13 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     pbox : bool
         If True, plot p-box. Default is False.
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
@@ -364,36 +369,36 @@ def plot_rslc_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=li
     # Plot p-box?
     if pbox:
         # Get lower and upper p-box bounds
-        lower_da = get_rslc_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        upper_da = get_rslc_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        lower_da = get_sl_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
+        upper_da = get_sl_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Shade p-box
         ax.fill_betweenx(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get quantile function data and plot
-        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, linestyle='--',
                 label=WF_LABEL_DICT[workflow])
     # Loop over workflows
     for workflow in workflows:
         # Get quantile function data and plot
-        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=WF_LABEL_DICT[workflow])
     # Customise plot
     ax.legend(loc='lower right')
     ax.set_ylim([0, 1])
     ax.set_ylabel('Probability')
     if rate:
-        ax.set_xlabel(f'RSLC rate, mm/yr')
+        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
     else:
-        ax.set_xlabel(f'RSLC, m')
+        ax.set_xlabel(f'Sea level rise, m')
     return ax
 
 
-def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
-                        rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', threshold=None, ax=None):
+def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
+                      rate=False, scenario='ssp585', year=2100, gauge=None, threshold=None, ax=None):
     """
-    Plot marginal distributions corresponding to projections of total RSLC.
+    Plot marginal distributions corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -403,13 +408,13 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     bg_workflows : list of str
         List containing workflows to show in lighter colour in background. Default is empty list().
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     threshold : float or None.
         Threshold used for calculating probability of exceedance. Default is None.
     ax : Axes
@@ -428,7 +433,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get marginal samples, calculate probability of exceeding threshold, and plot
-        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         if threshold:
             p_threshold = (marginal_n > threshold).mean()
             label = f'{workflow} ({p_threshold:.0%})'
@@ -439,7 +444,7 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     # Loop over workflows
     for workflow in workflows:
         # Get marginal samples, calculate probability of exceeding threshold, and plot
-        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         if threshold:
             p_threshold = (marginal_n > threshold).mean()
             label = f'{workflow} ({p_threshold:.0%})'
@@ -449,16 +454,16 @@ def plot_rslc_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workfl
     # Customise plot
     ax.legend(loc='upper right')
     if rate:
-        ax.set_xlabel(f'RSLC rate, mm/yr')
+        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
     else:
-        ax.set_xlabel(f'RSLC, m')
+        ax.set_xlabel(f'Sea-level rise, m')
     return ax
 
 
-def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
-                         rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', annotations=True, ax=None):
+def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
+                       rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
     """
-    Plot violinplot of marginal distributions corresponding to projections of total RSLC.
+    Plot violinplot of marginal distributions corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -466,13 +471,13 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
         List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions.
         Default is ('wf_2e', 'fusion_1e+2e', 'outer').
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     annotations : bool
         If True (default), add default annotations.
     ax : Axes
@@ -488,13 +493,13 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     # Loop over workflows, sample marginal, and save to DataFrame
     samples_df = pd.DataFrame()  # DataFrame to hold samples from different marginals
     for workflow in workflows:
-        marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         samples_df[workflow] = marginal_n
     # Violinplot
     sns.violinplot(data=samples_df, cut=0, palette=WF_COLOR_DICT, orient='h', width=0.6, inner=None, ax=ax)
     # Percentiles, based on quantile function
     for i, workflow in enumerate(workflows):
-        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         for p_str, linestyle in {'99.5th': (0, (1, 4)), '95th': 'dotted', '83rd': 'dashed', '50th': 'dashdot'}.items():
             p = float(p_str[:-2])
             val = qf_da.sel(quantiles=p/100).data  # percentile value
@@ -510,16 +515,16 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
                 [f'Median:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[0]].split()[0]}',
                  f'Upper tail:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[2]].split()[0]}']
                 ):
-            qf_da = get_rslc_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
+            qf_da = get_sl_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
             val = qf_da.sel(quantiles=p/100).data
             ax.annotate(text, [val, y], ha='center', va='center', color=WF_COLOR_DICT[workflows[1]])
     # Customise plot
     ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
     ax.set_yticklabels([WF_LABEL_DICT[workflow] for workflow in workflows])
     if rate:
-        ax.set_xlabel(f'RSLC rate, mm/yr')
+        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
     else:
-        ax.set_xlabel(f'RSLC, m')
+        ax.set_xlabel(f'Sea-level rise, m')
     ax.tick_params(axis='both', labelsize='large')
     for label in ax.get_yticklabels():
         label.set_fontweight('bold')
@@ -527,9 +532,9 @@ def plot_rslc_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
 
 
 def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
-                            scenarios=('ssp126', 'ssp585'), year=2100, gauge='TANJONG_PAGAR', ax=None):
+                            scenarios=('ssp126', 'ssp585'), year=2100, gauge=None, ax=None):
     """
-    Plot heatmap table showing probability of exceeding an RSLC threshold.
+    Plot heatmap table showing probability of exceeding a sea level threshold.
 
     Parameters
     ----------
@@ -539,13 +544,13 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
         List containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, for table columns.
         Default is ('lower', 'fusion_1e+2e', 'upper').
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenarios : list str
         List containing scenarios, for table rows. Default is ('ssp126', 'ssp585').
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
@@ -560,7 +565,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     p_exceed_df = pd.DataFrame()
     for workflow in workflows:
         for scenario in scenarios:
-            marginal_n = sample_rslc_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+            marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
             p_exceed = (marginal_n > threshold).mean()
             p_exceed_df.loc[SSP_LABEL_DICT[scenario], WF_LABEL_DICT[workflow]] = p_exceed
     # Plot heatmap
@@ -580,7 +585,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
 def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
                                         'fusion_1e+2e'),
-                             rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', fmt='.1f', ax=None):
+                             rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
     """
     Plot heatmap table showing percentiles of quantile functions.
 
@@ -592,13 +597,13 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
         List containing workflows etc, for table rows.
         Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Scenario. Default is 'ssp585'.
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     fmt : str.
         Format string to use for values. Default is '.1f'.
     ax : Axes
@@ -614,7 +619,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     # For each combination of workflow and percentile, save percentile value to DataFrame
     val_df = pd.DataFrame()
     for workflow in workflows:  # rows
-        qf_da = get_rslc_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
         for perc_str in percentiles:  # columns
             perc_flt = float(perc_str[:-2])  # string -> float (e.g. '50th' -> 50.)
             val = qf_da.sel(quantiles=perc_flt/100).data  # percentile value
@@ -627,18 +632,18 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
     if rate:
-        ax.set_title('Percentiles of RSLC rate, mm/yr\n')
+        ax.set_title('Percentiles of rate of sea-level rise, mm/yr\n')
     else:
-        ax.set_title('Percentiles of RSLC, m\n')
+        ax.set_title('Percentiles of sea-level rise, m\n')
     return ax
 
 
 def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)),
                       bg_workflows_r=(list(), list(), ('mean_1e+2e', 'outer')),
                       pbox_r=(False, True, False),
-                      rate=False, scenario='ssp585', year=2100, gauge='TANJONG_PAGAR', xlim=None):
+                      rate=False, scenario='ssp585', year=2100, gauge=None, xlim=None):
     """
-    Composite figure showing RSLC quantile functions (1st col) and marginals (2nd col).
+    Composite figure showing sea-level quantile functions (1st col) and marginals (2nd col).
 
     Parameters
     ----------
@@ -652,13 +657,13 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     pbox_r : list of bool
         When True, plot p-box. Default is (False, True, False).
     rate : bool
-        If True, use RSLC rate. If False (default), use RSLC.
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
         Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
-    gauge : int or str
-        ID or name of gauge. Default is 'TANJONG_PAGAR' (equivalent to 1746).
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
     xlim : list or None
         x-axis range. Default is None.
 
@@ -680,15 +685,15 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
             ax = axs[r, 0]
         except IndexError:  # IndexError is encountered if only single row
             ax = axs[0]
-        plot_rslc_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
-                      rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
+        plot_sl_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
+                    rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
         # 2nd column: marginals
         try:
             ax = axs[r, 1]
         except IndexError:
             ax = axs[1]
-        plot_rslc_marginals(workflows=workflows, bg_workflows=bg_workflows,
-                            rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
+        plot_sl_marginals(workflows=workflows, bg_workflows=bg_workflows,
+                          rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
     # Customise figure
     for i, ax in enumerate(axs.flatten()):
         ax.set_title(f' ({chr(97+i)})', y=1.0, pad=-4, va='top', loc='left')
