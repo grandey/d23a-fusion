@@ -29,8 +29,6 @@ The analysis code requires data from the [IPCC AR6 Sea Level Projections](https:
 mkdir data
 curl "https://zenodo.org/record/6382554/files/ar6.zip?download=1" --output data/ar6.zip
 unzip data/ar6.zip -d data/
-curl "https://zenodo.org/record/6382554/files/ar6-regional-confidence.zip?download=1" --output data/ar6-regional-confidence.zip
-unzip data/ar6-regional-confidence.zip -d data/
 curl "https://zenodo.org/record/5914932/files/ar6-regional-distributions.zip?download=1" --output data/ar6-regional-distributions.zip
 unzip data/ar6-regional-distributions.zip -d data/
 curl "https://zenodo.org/record/6382554/files/location_list.lst?download=1" --output data/location_list.lst
