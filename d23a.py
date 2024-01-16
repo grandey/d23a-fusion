@@ -47,7 +47,7 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'wf_4': '$W_4$ (workflow 4)',
                  'lower': '$L$ (lower bound)', 'upper': '$U$ (upper bound)',
                  'outer': '$B$ (outer bound)', 'effective_0.5': '$E_{0.5}$ (effective)',
-                 'mean_1e+2e': '$M$ (med. conf. mean)', 'mean_1f+2f': '$M$ (med. conf. mean)',
+                 'mean_1e+2e': '$M$ (medium conf. mean)', 'mean_1f+2f': '$M$ (medium conf. mean)',
                  'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
                  'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)'}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
