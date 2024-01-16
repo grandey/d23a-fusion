@@ -51,6 +51,9 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
                  'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)'}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
+SL_LABEL_DICT = {(False, False): 'GMSL change, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
+                 (False, True): 'RSL change, m',
+                 (True, True): 'RSL rate, mm yr$^{-1}$'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
 S_NUM = itertools.count(1)  # supplementary figures counter
@@ -388,10 +391,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     ax.legend(loc='lower right')
     ax.set_ylim([0, 1])
     ax.set_ylabel('Probability')
-    if rate:
-        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
-    else:
-        ax.set_xlabel(f'Sea level rise, m')
+    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
     return ax
 
 
@@ -453,10 +453,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
-    if rate:
-        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
-    else:
-        ax.set_xlabel(f'Sea-level rise, m')
+    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
     return ax
 
 
@@ -521,10 +518,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     # Customise plot
     ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
     ax.set_yticklabels([WF_LABEL_DICT[workflow] for workflow in workflows])
-    if rate:
-        ax.set_xlabel(f'Rate of sea-level rise, mm/yr')
-    else:
-        ax.set_xlabel(f'Sea-level rise, m')
+    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
     ax.tick_params(axis='both', labelsize='large')
     for label in ax.get_yticklabels():
         label.set_fontweight('bold')
@@ -634,10 +628,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     ax.tick_params(top=False, bottom=False, left=False, right=False, labeltop=True, labelbottom=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
-    if rate:
-        ax.set_title('Percentiles of rate of sea-level rise, mm/yr\n')
-    else:
-        ax.set_title('Percentiles of sea-level rise, m\n')
+    ax.set_xlabel(f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n')
     if gauge is not None:
         ax.text(-0.25, 1.1, f'Location:\n{gauge.replace("_", " ").title()}',
                 ha='center', va='bottom', transform=ax.transAxes)
