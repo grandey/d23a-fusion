@@ -628,7 +628,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     ax.tick_params(top=False, bottom=False, left=False, right=False, labeltop=True, labelbottom=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
-    ax.set_xlabel(f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n')
+    ax.set_title(f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n')
     if gauge is not None:
         ax.text(-0.25, 1.1, f'Location:\n{gauge.replace("_", " ").title()}',
                 ha='center', va='bottom', transform=ax.transAxes)
