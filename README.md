@@ -23,12 +23,17 @@ conda activate d23a-fusion
 The analysis has been performed within this environment on _macOS 13_ (arm64).
 
 ### Input data
-The analysis code requires data from the [IPCC AR6 Sea Level Projections](https://doi.org/10.5281/zenodo.6382554) and the [IPCC AR6 Relative Sea Level Projection Distributions](https://doi.org/10.5281/zenodo.5914932) repositories, which can be downloaded as follows:
+The analysis code requires projections of global mean sea level change from the [IPCC AR6 Sea Level Projections](https://doi.org/10.5281/zenodo.6382554) repository, which can be downloaded as follows:
 
 ```
 mkdir data
 curl "https://zenodo.org/record/6382554/files/ar6.zip?download=1" --output data/ar6.zip
 unzip data/ar6.zip -d data/
+```
+
+Optionally, the functions in [`d23a.py`](d23a.py) can also use projections of relative sea level change and rate from the [IPCC AR6 Relative Sea Level Projection Distributions](https://doi.org/10.5281/zenodo.5914932) repository:
+
+```
 curl "https://zenodo.org/record/5914932/files/ar6-regional-distributions.zip?download=1" --output data/ar6-regional-distributions.zip
 unzip data/ar6-regional-distributions.zip -d data/
 curl "https://zenodo.org/record/6382554/files/location_list.lst?download=1" --output data/location_list.lst
