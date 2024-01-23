@@ -497,7 +497,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     # Percentiles, based on quantile function
     for i, workflow in enumerate(workflows):
         qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        for p_str, linestyle in {'99.5th': (0, (1, 4)), '95th': 'dotted', '83rd': 'dashed', '50th': 'dashdot'}.items():
+        for p_str, linestyle in {'99th': (0, (1, 4)), '95th': 'dotted', '83rd': 'dashed', '50th': 'dashdot'}.items():
             p = float(p_str[:-2])
             val = qf_da.sel(quantiles=p/100).data  # percentile value
             if i == 0:  # label each percentile only once in legend
@@ -508,7 +508,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     # Annotations (assuming combination & order of workflows follows default)
     if annotations:
         for p, y, text in zip(
-                [50, 99.5], [0.5, 1.5],
+                [50, 99], [0.5, 1.5],
                 [f'Median:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[0]].split()[0]}',
                  f'Upper tail:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[2]].split()[0]}']
                 ):
