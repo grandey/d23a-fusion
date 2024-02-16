@@ -1,11 +1,11 @@
-# d23a-fusion: Analysis code for "Fusion of Probabilistic Projections of Sea Level"
+# Analysis Code for _Fusion of Probabilistic Projections of Sea-Level Rise_ (d23a-fusion)
 
 [![DOI](https://zenodo.org/badge/630738591.svg)](https://zenodo.org/badge/latestdoi/630738591)
 
 ## Usage guidelines
 This repository accompanies the following manuscript:
 
-B. S. Grandey, J. Dauwels, Z. Y. Koh, B. P. Horton, and L. Y. Chew (2023),  **Fusion of Probabilistic Projections of Sea Level**, in preparation.
+B. S. Grandey, J. Dauwels, Z. Y. Koh, B. P. Horton, and L. Y. Chew (2024),  **Fusion of Probabilistic Projections of Sea-Level Rise**, in preparation.
 
 The manuscript serves as the primary reference.
 The Zenodo archive of this repository serves as a secondary reference.
@@ -23,14 +23,17 @@ conda activate d23a-fusion
 The analysis has been performed within this environment on _macOS 13_ (arm64).
 
 ### Input data
-The analysis code requires data from the [IPCC AR6 Sea Level Projections](https://doi.org/10.5281/zenodo.6382554) and the [IPCC AR6 Relative Sea Level Projection Distributions](https://doi.org/10.5281/zenodo.5914932) repositories, which can be downloaded as follows:
+The analysis code requires projections of global mean sea-level rise from the [IPCC AR6 Sea Level Projections](https://doi.org/10.5281/zenodo.6382554) repository, which can be downloaded as follows:
 
 ```
 mkdir data
 curl "https://zenodo.org/record/6382554/files/ar6.zip?download=1" --output data/ar6.zip
 unzip data/ar6.zip -d data/
-curl "https://zenodo.org/record/6382554/files/ar6-regional-confidence.zip?download=1" --output data/ar6-regional-confidence.zip
-unzip data/ar6-regional-confidence.zip -d data/
+```
+
+Optionally, the functions in [`d23a.py`](d23a.py) can also use projections of relative sea-level change and rate from the [IPCC AR6 Relative Sea Level Projection Distributions](https://doi.org/10.5281/zenodo.5914932) repository:
+
+```
 curl "https://zenodo.org/record/5914932/files/ar6-regional-distributions.zip?download=1" --output data/ar6-regional-distributions.zip
 unzip data/ar6-regional-distributions.zip -d data/
 curl "https://zenodo.org/record/6382554/files/location_list.lst?download=1" --output data/location_list.lst
