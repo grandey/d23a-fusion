@@ -175,7 +175,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
             qf_da.attrs['units'] = 'm'
     # Case 2: lower or upper bound of low-confidence p-box
     elif workflow in ['lower', 'upper']:
-        # Contributing workflows (https://doi.org/10.5194/egusphere-2023-14)
+        # Contributing workflows (Kopp et al., GMD, 2023)
         if not rate:
             wf_list = ['wf_1e', 'wf_2e', 'wf_3e', 'wf_4']
         else:
