@@ -579,7 +579,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     return ax
 
 
-def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th'),
+def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
                                         'fusion_1e+2e'),
                              rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
@@ -589,7 +589,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     Parameters
     ----------
     percentiles : tuple of str
-        List containing percentiles, for table columns. Default is ('50th', '17th', '83rd', '5th', '95th').
+        List containing percentiles, for table columns. Default is ('5th', '17th', '50th', '83rd', '95th').
     workflows : tuple of str
         List containing workflows etc, for table rows.
         Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
