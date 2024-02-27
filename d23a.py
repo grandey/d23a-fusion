@@ -63,7 +63,7 @@ O_NUM = itertools.count(1)  # other figures counter
 
 def get_watermark():
     """Return watermark string, including versions of dependencies."""
-    packages = ('matplotlib,numpy,pandas,seaborn,xarray')
+    packages = 'matplotlib,numpy,pandas,seaborn,xarray'
     return watermark(machine=True, conda=True, python=True, packages=packages)
 
 
