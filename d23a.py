@@ -18,6 +18,7 @@ import xarray as xr
 
 
 # Matplotlib settings
+sns.set_style('whitegrid')
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['axes.labelsize'] = 'large'
 plt.rcParams['axes.labelweight'] = 'bold'
@@ -396,7 +397,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
 
 
 def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
-                      rate=False, scenario='ssp585', year=2100, gauge=None, threshold=None, ax=None):
+                      rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
     Plot marginal distributions corresponding to projections of total sea level.
 
@@ -415,8 +416,6 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
         Year. Default is 2100.
     gauge : int, str, or None.
         ID or name of gauge. If None (default), then use global mean.
-    threshold : float or None.
-        Threshold used for calculating probability of exceedance. Default is None.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
@@ -427,29 +426,16 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     # Create figure if ax is None
     if not ax:
         fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
-    # Add line showing threshold
-    if threshold:
-        ax.axvline(threshold, color='0.5', linestyle=':')
     # Loop over background workflows
     for workflow in bg_workflows:
-        # Get marginal samples, calculate probability of exceeding threshold, and plot
+        # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        if threshold:
-            p_threshold = (marginal_n > threshold).mean()
-            label = f'{workflow} ({p_threshold:.0%})'
-        else:
-            label = workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, linestyle='--',
                     label=WF_LABEL_DICT[workflow], ax=ax)
     # Loop over workflows
     for workflow in workflows:
-        # Get marginal samples, calculate probability of exceeding threshold, and plot
+        # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        if threshold:
-            p_threshold = (marginal_n > threshold).mean()
-            label = f'{workflow} ({p_threshold:.0%})'
-        else:
-            label = workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
