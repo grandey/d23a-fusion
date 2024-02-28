@@ -341,7 +341,7 @@ def plot_fusion_weights(ax=None):
 def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
                 rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot quantile functions corresponding to projections of total sea level
+    Plot quantile functions corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -399,7 +399,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
 def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
                       rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot marginal distributions corresponding to projections of total sea level.
+    Plot marginal densities corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -446,7 +446,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
 def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
                        rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
     """
-    Plot violinplot of marginal distributions corresponding to projections of total sea level.
+    Plot violinplot of marginal densities corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -517,7 +517,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
 def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
                             scenarios=('ssp126', 'ssp585'), year=2100, gauge=None, ax=None):
     """
-    Plot heatmap table showing probability of exceeding a sea level threshold.
+    Plot heatmap table showing probability of exceeding a sea-level threshold.
 
     Parameters
     ----------
@@ -626,7 +626,7 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
                       pbox_r=(False, True, False),
                       rate=False, scenario='ssp585', year=2100, gauge=None, xlim=None):
     """
-    Composite figure showing sea-level quantile functions (1st col) and marginals (2nd col).
+    Composite figure showing sea-level quantile functions (1st col) and marginal densities (2nd col).
 
     Parameters
     ----------
@@ -670,7 +670,7 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
             ax = axs[0]
         plot_sl_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
                     rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
-        # 2nd column: marginals
+        # 2nd column: marginal densities
         try:
             ax = axs[r, 1]
         except IndexError:
