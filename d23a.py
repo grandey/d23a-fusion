@@ -18,6 +18,7 @@ import xarray as xr
 
 
 # Matplotlib settings
+sns.set_style('whitegrid')
 plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['axes.labelsize'] = 'large'
 plt.rcParams['axes.labelweight'] = 'bold'
@@ -62,7 +63,7 @@ O_NUM = itertools.count(1)  # other figures counter
 
 def get_watermark():
     """Return watermark string, including versions of dependencies."""
-    packages = ('matplotlib,numpy,pandas,seaborn,xarray')
+    packages = 'matplotlib,numpy,pandas,seaborn,xarray'
     return watermark(machine=True, conda=True, python=True, packages=packages)
 
 
@@ -174,7 +175,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
             qf_da.attrs['units'] = 'm'
     # Case 2: lower or upper bound of low-confidence p-box
     elif workflow in ['lower', 'upper']:
-        # Contributing workflows (https://doi.org/10.5194/egusphere-2023-14)
+        # Contributing workflows (Kopp et al., GMD, 2023)
         if not rate:
             wf_list = ['wf_1e', 'wf_2e', 'wf_3e', 'wf_4']
         else:
@@ -340,7 +341,7 @@ def plot_fusion_weights(ax=None):
 def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
                 rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot quantile functions corresponding to projections of total sea level
+    Plot quantile functions corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -396,9 +397,9 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
 
 
 def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
-                      rate=False, scenario='ssp585', year=2100, gauge=None, threshold=None, ax=None):
+                      rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot marginal distributions corresponding to projections of total sea level.
+    Plot marginal densities corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -415,8 +416,6 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
         Year. Default is 2100.
     gauge : int, str, or None.
         ID or name of gauge. If None (default), then use global mean.
-    threshold : float or None.
-        Threshold used for calculating probability of exceedance. Default is None.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
@@ -427,29 +426,16 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     # Create figure if ax is None
     if not ax:
         fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
-    # Add line showing threshold
-    if threshold:
-        ax.axvline(threshold, color='0.5', linestyle=':')
     # Loop over background workflows
     for workflow in bg_workflows:
-        # Get marginal samples, calculate probability of exceeding threshold, and plot
+        # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        if threshold:
-            p_threshold = (marginal_n > threshold).mean()
-            label = f'{workflow} ({p_threshold:.0%})'
-        else:
-            label = workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, linestyle='--',
                     label=WF_LABEL_DICT[workflow], ax=ax)
     # Loop over workflows
     for workflow in workflows:
-        # Get marginal samples, calculate probability of exceeding threshold, and plot
+        # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        if threshold:
-            p_threshold = (marginal_n > threshold).mean()
-            label = f'{workflow} ({p_threshold:.0%})'
-        else:
-            label = workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
@@ -460,7 +446,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
 def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
                        rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
     """
-    Plot violinplot of marginal distributions corresponding to projections of total sea level.
+    Plot violinplot of marginal densities corresponding to projections of total sea level.
 
     Parameters
     ----------
@@ -531,7 +517,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
 def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
                             scenarios=('ssp126', 'ssp585'), year=2100, gauge=None, ax=None):
     """
-    Plot heatmap table showing probability of exceeding a sea level threshold.
+    Plot heatmap table showing probability of exceeding a sea-level threshold.
 
     Parameters
     ----------
@@ -579,7 +565,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     return ax
 
 
-def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th'),
+def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
                                         'fusion_1e+2e'),
                              rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
@@ -589,7 +575,7 @@ def plot_percentiles_heatmap(percentiles=('50th', '17th', '83rd', '5th', '95th')
     Parameters
     ----------
     percentiles : tuple of str
-        List containing percentiles, for table columns. Default is ('50th', '17th', '83rd', '5th', '95th').
+        List containing percentiles, for table columns. Default is ('5th', '17th', '50th', '83rd', '95th').
     workflows : tuple of str
         List containing workflows etc, for table rows.
         Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
@@ -640,7 +626,7 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
                       pbox_r=(False, True, False),
                       rate=False, scenario='ssp585', year=2100, gauge=None, xlim=None):
     """
-    Composite figure showing sea-level quantile functions (1st col) and marginals (2nd col).
+    Composite figure showing sea-level quantile functions (1st col) and marginal densities (2nd col).
 
     Parameters
     ----------
@@ -684,7 +670,7 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
             ax = axs[0]
         plot_sl_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
                     rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
-        # 2nd column: marginals
+        # 2nd column: marginal densities
         try:
             ax = axs[r, 1]
         except IndexError:
