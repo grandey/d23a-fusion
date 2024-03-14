@@ -27,11 +27,11 @@ The analysis code requires projections of global mean sea-level rise from the [I
 
 ```
 mkdir data
-curl "https://zenodo.org/record/6382554/files/ar6.zip?download=1" --output data/ar6.zip
+curl "https://zenodo.org/records/6382554/files/ar6.zip?download=1" --output data/ar6.zip
 unzip data/ar6.zip -d data/
 ```
 
-If `curl` fails to download the data, use a web browser to download the data from https://zenodo.org/record/6382554/files/ar6.zip?download=1.
+If `curl` fails to download the data, use a web browser to download the data from https://zenodo.org/records/6382554/files/ar6.zip?download=1.
 
 Optionally, the functions in [`d23a.py`](d23a.py) can also use projections of relative sea-level change and rate from the [IPCC AR6 Relative Sea Level Projection Distributions](https://doi.org/10.5281/zenodo.5914932) repository:
 
