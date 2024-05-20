@@ -101,9 +101,14 @@ def get_gauge_info(gauge='TANJONG_PAGAR'):
 
 
 @cache
-def get_fusion_weights():
+def get_fusion_weights(weighting='triangular'):
     """
-    Return triangular weighting function for fusion.
+    Return triangular or conservative weighting function for fusion.
+
+    Parameters
+    ----------
+    weighting : str
+        'triangular' (triangle; default) or 'conservative' (trapezoid).
 
     Returns
     -------
@@ -112,8 +117,19 @@ def get_fusion_weights():
     """
     # Get a quantile function corresponding to a projection of total sea level, using default parameters
     w_da = get_sl_qf().copy()  # use as template for w_da, with data to be updated
-    # Update data to triangular weighting function, with weights depending on probability
-    w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
+    # Update data to follow weighting function, with weights depending on probability
+    if weighting == 'triangular':
+        w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
+    elif weighting == 'conservative':  # trapezoid, using 17th and 83rd percentiles
+        da1 = w_da.sel(quantiles=slice(0, 0.169999))
+        da1[:] = da1.quantiles / 0.17
+        da2 = w_da.sel(quantiles=slice(0.17, 0.83))
+        da2[:] = 1.
+        da3 = w_da.sel(quantiles=slice(0.830001, 1))
+        da3[:] = (1 - da3.quantiles) / 0.17
+        w_da = xr.concat([da1, da2, da3], dim='quantiles')
+    else:
+        raise ValueError(f"weighting should be 'triangular' or 'conservative', not '{weighting}'.")
     # Rename
     w_da = w_da.rename('weights')
     return w_da
@@ -309,7 +325,7 @@ def plot_fusion_weights(ax=None):
     Plot weighting function used for fusion.
 
     Parameters
-    -----
+    ----------
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
