@@ -41,7 +41,8 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'outer': 'darkmagenta', 'effective_0.5': 'hotpink',
                  'mean_1e+2e': 'turquoise', 'mean_1f+2f': 'turquoise',
                  'fusion_1e+2e': 'teal', 'fusion_1f+2f': 'teal',
-                 'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue'}
+                 'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue',
+                 'conservative_1e+2e': 'slateblue',}
 WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',  # workflow labels in legends
                  'wf_2e': '$W_2$ (workflow 2e)', 'wf_2f': '$W_2$ (workflow 2f)',
                  'wf_3e': '$W_3$ (workflow 3e)', 'wf_3f': '$W_3$ (workflow 3f)',
@@ -50,7 +51,8 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'outer': '$B$ (outer bound)', 'effective_0.5': '$E_{0.5}$ (effective)',
                  'mean_1e+2e': '$M$ (medium conf. mean)', 'mean_1f+2f': '$M$ (medium conf. mean)',
                  'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
-                 'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)'}
+                 'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)',
+                 'conservative_1e+2e': '$F\'$ (conservative fusion)',}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
 SL_LABEL_DICT = {(False, False): 'GMSL change, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
                  (False, True): 'RSL change, m',
@@ -235,7 +237,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         # Derive mean distribution
         qf_da = (wf1_da + wf2_da) / 2.
     # Case 6: fusion distribution
-    elif 'fusion' in workflow:
+    elif 'fusion' or 'conservative' in workflow:
         # Get data for preferred workflow and outer bound of p-box
         if '+' in workflow:  # use mean for preferred workflow
             wf = f'mean_{workflow.split("_")[-1]}'
@@ -244,7 +246,10 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         pref_da = get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_sl_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Triangular weighting function, with weights depending on probability p
-        w_da = get_fusion_weights()
+        if 'conservative' in workflow:
+            w_da = get_fusion_weights(weighting='conservative')
+        else:
+            w_da = get_fusion_weights()  # default is triangular weighting function
         # Derive fusion distribution; rely on automatic broadcasting/alignment
         qf_da = w_da * pref_da + (1 - w_da) * outer_da
         # Correct median (which is currently nan due to nan in outer_da)
@@ -583,7 +588,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
 
 def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
-                                        'fusion_1e+2e'),
+                                        'fusion_1e+2e', 'conservative_1e+2e'),
                              rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
     """
     Plot heatmap table showing percentiles of quantile functions.
@@ -594,7 +599,8 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
         List containing percentiles, for table columns. Default is ('5th', '17th', '50th', '83rd', '95th').
     workflows : tuple of str
         List containing workflows etc, for table rows.
-        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
+        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
+        'fusion_1e+2e', 'conservative_1e+2e')
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
