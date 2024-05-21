@@ -53,7 +53,7 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
                  'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)',
                  'conservative_1e+2e': '$F\'$ (conservative fusion)',}
-SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5'}
+SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5', 'both': 'Across\nscenarios'}
 SL_LABEL_DICT = {(False, False): 'GMSL change, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
                  (False, True): 'RSL change, m',
                  (True, True): 'RSL rate, mm yr$^{-1}$'}
@@ -150,7 +150,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp585' (default), 'ssp126', and 'both' (for p-box bound, mean, or fusion across scenarios).
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -198,16 +198,22 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
             wf_list = ['wf_1e', 'wf_2e', 'wf_3e', 'wf_4']
         else:
             wf_list = ['wf_1f', 'wf_2f', 'wf_3f', 'wf_4']
-        # Get quantile function data for each of these workflows
+        # Contributing scenarios
+        if scenario == 'both':
+            scen_list = ['ssp126', 'ssp585']
+        else:
+            scen_list = [scenario,]
+        # Get quantile function data for each of these workflows and scenarios
         qf_da_list = []
         for wf in wf_list:
-            qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge))
-        concat_da = xr.concat(qf_da_list, 'wf')
+            for scen in scen_list:
+                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scen, year=year, gauge=gauge))
+        concat_da = xr.concat(qf_da_list, 'wf_scen')
         # Find lower or upper bound
         if workflow == 'lower':
-            qf_da = concat_da.min(dim='wf')
+            qf_da = concat_da.min(dim='wf_scen')
         else:
-            qf_da = concat_da.max(dim='wf')
+            qf_da = concat_da.max(dim='wf_scen')
     # Case 3: Outer bound of p-box
     elif workflow == 'outer':
         # Get data for lower and upper p-box bounds
@@ -230,12 +236,19 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         qf_da = w * upper_da + (1 - w) * lower_da
     # Case 5: "mean" quantile function
     elif 'mean' in workflow:
-        # Get data for two workflows
-        wf1, wf2 = [f'wf_{s}' for s in workflow.split('_')[-1].split('+')]
-        wf1_da = get_sl_qf(workflow=wf1, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        wf2_da = get_sl_qf(workflow=wf2, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        # Derive mean distribution
-        qf_da = (wf1_da + wf2_da) / 2.
+        # Contributing scenarios
+        if scenario == 'both':
+            scen_list = ['ssp126', 'ssp585']
+        else:
+            scen_list = [scenario,]
+        # Get quantile function data for workflows and scenarios
+        qf_da_list = []
+        for wf in [f'wf_{s}' for s in workflow.split('_')[-1].split('+')]:
+            for scen in scen_list:
+                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scen, year=year, gauge=gauge))
+        concat_da = xr.concat(qf_da_list, dim='wf_scen')
+        # Derive mean
+        qf_da = concat_da.mean(dim='wf_scen')
     # Case 6: fusion distribution
     elif 'fusion' or 'conservative' in workflow:
         # Get data for preferred workflow and outer bound of p-box
@@ -245,7 +258,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
             wf = f'wf_{workflow.split("_")[-1]}'
         pref_da = get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_sl_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
-        # Triangular weighting function, with weights depending on probability p
+        # Weighting function, with weights depending on probability p
         if 'conservative' in workflow:
             w_da = get_fusion_weights(weighting='conservative')
         else:
@@ -282,7 +295,7 @@ def sample_sl_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=210
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -376,7 +389,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -432,7 +445,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -465,7 +478,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
 
 
 def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
-                       rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
+                       rate=False, scenario='both', year=2100, gauge=None, annotations=True, ax=None):
     """
     Plot violinplot of marginal densities corresponding to projections of total sea level.
 
@@ -477,7 +490,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp126', 'ssp585', and 'both' (default).
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -536,7 +549,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
 
 
 def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
-                            scenarios=('ssp126', 'ssp585'), year=2100, gauge=None, ax=None):
+                            scenarios=('ssp126', 'ssp585', 'both'), year=2100, gauge=None, ax=None):
     """
     Plot heatmap table showing probability of exceeding a sea-level threshold.
 
@@ -550,7 +563,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenarios : list str
-        List containing scenarios, for table rows. Default is ('ssp126', 'ssp585').
+        List containing scenarios, for table rows. Default is ('ssp126', 'ssp585', 'both').
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -564,7 +577,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(5, 1), tight_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(5.5, 2.5), tight_layout=True)
     # For each combination of workflow and scenario, save probability of exceeding threshold to DataFrame
     p_exceed_df = pd.DataFrame()
     for workflow in workflows:
@@ -574,7 +587,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
             p_exceed_df.loc[SSP_LABEL_DICT[scenario], WF_LABEL_DICT[workflow]] = p_exceed
     # Plot heatmap
     sns.heatmap(p_exceed_df, annot=True, fmt='.0%', cmap='inferno_r', vmin=0., vmax=1.,
-                annot_kws={'weight': 'bold'}, ax=ax)
+                annot_kws={'weight': 'bold', 'fontsize': 'large'}, ax=ax)
     # Change colorbar labels to percentage
     cbar = ax.collections[0].colorbar
     cbar.set_ticks([0., 1.])
@@ -664,7 +677,7 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126' and 'ssp585' (default).
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
