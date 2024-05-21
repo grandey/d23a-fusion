@@ -54,8 +54,8 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)',
                  'conservative_1e+2e': '$F\'$ (conservative fusion)',}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5', 'both': 'Across\nscenarios'}
-SL_LABEL_DICT = {(False, False): 'GMSL change, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
-                 (False, True): 'RSL change, m',
+SL_LABEL_DICT = {(False, False): '$\Delta$GMSL, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
+                 (False, True): '$\Delta$RSL, m',
                  (True, True): 'RSL rate, mm yr$^{-1}$'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
@@ -426,7 +426,12 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     ax.legend(loc='lower right')
     ax.set_ylim([0, 1])
     ax.set_ylabel('Probability')
-    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
+    xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    if scenario == 'both':
+        xlabel = xlabel.replace(',', ' across scenarios,')
+    else:
+        xlabel = xlabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_xlabel(xlabel)
     return ax
 
 
@@ -473,7 +478,12 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
         sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
-    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
+    xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    if scenario == 'both':
+        xlabel = xlabel.replace(',', ' across scenarios,')
+    else:
+        xlabel = xlabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_xlabel(xlabel)
     return ax
 
 
@@ -538,7 +548,12 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     # Customise plot
     ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
     ax.set_yticklabels([WF_LABEL_DICT[workflow] for workflow in workflows])
-    ax.set_xlabel(SL_LABEL_DICT[(rate, bool(gauge))])
+    xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    if scenario == 'both':
+        xlabel = xlabel.replace(',', ' across scenarios,')
+    else:
+        xlabel = xlabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_xlabel(xlabel)
     ax.tick_params(axis='both', labelsize='large')
     for label in ax.get_yticklabels():
         label.set_fontweight('bold')
@@ -649,7 +664,12 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
     ax.tick_params(top=False, bottom=False, left=False, right=False, labeltop=True, labelbottom=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
-    ax.set_title(f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n')
+    title = f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n'
+    if scenario == 'both':
+        title = title.replace(',', ' across scenarios,')
+    else:
+        title = title.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_title(title)
     if gauge is not None:
         ax.text(-0.25, 1.1, f'Location:\n{gauge.replace("_", " ").title()}',
                 ha='center', va='bottom', transform=ax.transAxes)
