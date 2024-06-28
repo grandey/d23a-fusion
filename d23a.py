@@ -43,16 +43,16 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'fusion_1e+2e': 'teal', 'fusion_1f+2f': 'teal',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue',
                  'triangular_1e+2e': 'slateblue',}
-WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',  # workflow labels in legends
-                 'wf_2e': '$W_2$ (workflow 2e)', 'wf_2f': '$W_2$ (workflow 2f)',
-                 'wf_3e': '$W_3$ (workflow 3e)', 'wf_3f': '$W_3$ (workflow 3f)',
-                 'wf_4': '$W_4$ (workflow 4)',
-                 'lower': '$L$ (lower bound)', 'upper': '$U$ (upper bound)',
-                 'outer': '$B$ (outer bound)', 'effective_0.5': '$E_{0.5}$ (effective)',
-                 'mean_1e+2e': '$M$ (medium conf. mean)', 'mean_1f+2f': '$M$ (medium conf. mean)',
-                 'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
-                 'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)',
-                 'triangular_1e+2e': '$F\'$ (triangular fusion)',}
+WF_LABEL_DICT = {'wf_1e': 'Workflow 1e ($W_1$)', 'wf_1f': 'Workflow 1f ($W_1$)',  # workflow labels in legends
+                 'wf_2e': 'Workflow 2e ($W_2$)', 'wf_2f': 'Workflow 2f ($W_2$)',
+                 'wf_3e': 'Workflow 3e ($W_3$)', 'wf_3f': 'Workflow 3f ($W_3$)',
+                 'wf_4': 'Workflow 4 ($W_4$)',
+                 'lower': 'Lower bound ($L$)', 'upper': 'Upper bound ($U$)',
+                 'outer': 'Outer bound ($B$)', 'effective_0.5': 'Effective ($E_{0.5})$',
+                 'mean_1e+2e': 'Medium conf. mean ($M$)', 'mean_1f+2f': 'Medium conf. mean ($M$)',
+                 'fusion_1e+2e': 'Fusion ($F$)', 'fusion_1f+2f': 'Fusion ($F$)',
+                 'fusion_2e': 'Fusion 2e ($F_2$)', 'fusion_2f': 'Fusion 2f ($F_2$)', 'fusion_1e': 'Fusion 1e ($F_1$)',
+                 'triangular_1e+2e': 'Triangular fusion ($F\'$)',}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5', 'both': 'Across\nscenarios'}
 SL_LABEL_DICT = {(False, False): '$\Delta$GMSL, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
                  (False, True): '$\Delta$RSL, m',
