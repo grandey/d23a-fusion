@@ -42,7 +42,7 @@ WF_COLOR_DICT = {'wf_1e': 'skyblue', 'wf_1f': 'skyblue',  # colours to use when 
                  'mean_1e+2e': 'turquoise', 'mean_1f+2f': 'turquoise',
                  'fusion_1e+2e': 'teal', 'fusion_1f+2f': 'teal',
                  'fusion_2e': 'darkgreen', 'fusion_2f': 'darkgreen', 'fusion_1e': 'darkblue',
-                 'conservative_1e+2e': 'slateblue',}
+                 'triangular_1e+2e': 'slateblue',}
 WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',  # workflow labels in legends
                  'wf_2e': '$W_2$ (workflow 2e)', 'wf_2f': '$W_2$ (workflow 2f)',
                  'wf_3e': '$W_3$ (workflow 3e)', 'wf_3f': '$W_3$ (workflow 3f)',
@@ -52,7 +52,7 @@ WF_LABEL_DICT = {'wf_1e': '$W_1$ (workflow 1e)', 'wf_1f': '$W_1$ (workflow 1f)',
                  'mean_1e+2e': '$M$ (medium conf. mean)', 'mean_1f+2f': '$M$ (medium conf. mean)',
                  'fusion_1e+2e': '$F$ (fusion)', 'fusion_1f+2f': '$F$ (fusion)',
                  'fusion_2e': '$F_2e$ (fusion 2e)', 'fusion_2f': '$F_2$ (fusion 2f)', 'fusion_1e': '$F_1$ (fusion 1e)',
-                 'conservative_1e+2e': '$F\'$ (conservative fusion)',}
+                 'triangular_1e+2e': '$F\'$ (triangular fusion)',}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5', 'both': 'Across\nscenarios'}
 SL_LABEL_DICT = {(False, False): '$\Delta$GMSL, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
                  (False, True): '$\Delta$RSL, m',
@@ -103,14 +103,14 @@ def get_gauge_info(gauge='TANJONG_PAGAR'):
 
 
 @cache
-def get_fusion_weights(weighting='triangular'):
+def get_fusion_weights(weighting='trapezoidal'):
     """
-    Return triangular or conservative weighting function for fusion.
+    Return trapezoidal or triangular weighting function for fusion.
 
     Parameters
     ----------
     weighting : str
-        'triangular' (triangle; default) or 'conservative' (trapezoid).
+        'trapezoidal' (default) or 'triangular'.
 
     Returns
     -------
@@ -120,9 +120,7 @@ def get_fusion_weights(weighting='triangular'):
     # Get a quantile function corresponding to a projection of total sea level, using default parameters
     w_da = get_sl_qf().copy()  # use as template for w_da, with data to be updated
     # Update data to follow weighting function, with weights depending on probability
-    if weighting == 'triangular':
-        w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
-    elif weighting == 'conservative':  # trapezoid, using 17th and 83rd percentiles
+    if weighting == 'trapezoidal':  # trapezoid, using 17th and 83rd percentiles
         da1 = w_da.sel(quantiles=slice(0, 0.169999))
         da1[:] = da1.quantiles / 0.17
         da2 = w_da.sel(quantiles=slice(0.17, 0.83))
@@ -130,8 +128,10 @@ def get_fusion_weights(weighting='triangular'):
         da3 = w_da.sel(quantiles=slice(0.830001, 1))
         da3[:] = (1 - da3.quantiles) / 0.17
         w_da = xr.concat([da1, da2, da3], dim='quantiles')
+    elif weighting == 'triangular':
+        w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
     else:
-        raise ValueError(f"weighting should be 'triangular' or 'conservative', not '{weighting}'.")
+        raise ValueError(f"weighting should be 'trapezoidal' or 'triangular', not '{weighting}'.")
     # Rename
     w_da = w_da.rename('weights')
     return w_da
@@ -250,7 +250,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         # Derive mean
         qf_da = concat_da.mean(dim='wf_scen')
     # Case 6: fusion distribution
-    elif 'fusion' or 'conservative' in workflow:
+    elif 'fusion' or 'triangular' in workflow:
         # Get data for preferred workflow and outer bound of p-box
         if '+' in workflow:  # use mean for preferred workflow
             wf = f'mean_{workflow.split("_")[-1]}'
@@ -259,8 +259,8 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         pref_da = get_sl_qf(workflow=wf, rate=rate, scenario=scenario, year=year, gauge=gauge)
         outer_da = get_sl_qf(workflow='outer', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Weighting function, with weights depending on probability p
-        if 'conservative' in workflow:
-            w_da = get_fusion_weights(weighting='conservative')
+        if 'triangular' in workflow:
+            w_da = get_fusion_weights(weighting='triangular')
         else:
             w_da = get_fusion_weights()  # default is triangular weighting function
         # Derive fusion distribution; rely on automatic broadcasting/alignment
@@ -362,8 +362,8 @@ def plot_fusion_weights(ax=None):
     # Annotate, label axes etc
     ax.text(0.35, 0.5, WF_LABEL_DICT['mean_1e+2e'],
             fontsize='large', horizontalalignment='center', verticalalignment='center', fontweight='bold')
-    for y in [0.85, 0.15]:
-        ax.text(0.9, y, WF_LABEL_DICT['outer'],
+    for y in [0.94, 0.06]:
+        ax.text(0.97, y, WF_LABEL_DICT['outer'],
                 fontsize='large', horizontalalignment='right', verticalalignment='center', fontweight='bold')
     ax.set_xlim([0, 1])
     ax.set_ylim([0, 1])
@@ -616,7 +616,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
 
 def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th'),
                              workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
-                                        'fusion_1e+2e', 'conservative_1e+2e'),
+                                        'fusion_1e+2e'),
                              rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
     """
     Plot heatmap table showing percentiles of quantile functions.
@@ -627,8 +627,7 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
         List containing percentiles, for table columns. Default is ('5th', '17th', '50th', '83rd', '95th').
     workflows : tuple of str
         List containing workflows etc, for table rows.
-        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
-        'fusion_1e+2e', 'conservative_1e+2e')
+        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
