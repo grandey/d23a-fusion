@@ -488,7 +488,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
 
 
 def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
-                       rate=False, scenario='both', year=2100, gauge=None, annotations=True, ax=None):
+                       rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
     """
     Plot violinplot of marginal densities corresponding to projections of total sea level.
 
@@ -500,7 +500,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126', 'ssp585', and 'both' (default).
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -539,8 +539,8 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     if annotations:
         for p, y, text in zip(
                 [50, 99], [0.5, 1.5],
-                [f'Median:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[0]].split()[0]}',
-                 f'Upper tail:\n{WF_LABEL_DICT[workflows[1]].split()[0]}$\sim${WF_LABEL_DICT[workflows[2]].split()[0]}']
+                [f'Centre:\n$F \sim M$',
+                 f'Upper tail:\n$F \sim B$']
                 ):
             qf_da = get_sl_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
             val = qf_da.sel(quantiles=p/100).data
