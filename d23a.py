@@ -389,7 +389,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126', 'ssp585' (default), and 'both'.
+        Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -450,7 +450,7 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
-        Options are 'ssp126', 'ssp585' (default), and 'both'.
+        Options are 'ssp126' and 'ssp585' (default).
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
