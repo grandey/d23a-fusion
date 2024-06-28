@@ -487,6 +487,62 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     return ax
 
 
+def plot_sl_timeseries(workflow='fusion_1e+2e', rate=False, scenario='ssp585', gauge=None, ax=None):
+    """
+    Plot time series of median, likely range, and very likely range of total sea level.
+
+    Parameters
+    ----------
+    workflow : str
+        AR6 workflow (e.g. 'wf_1e'), p-box bound ('lower', 'upper', 'outer'),
+        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_1e+2e', default).
+    rate : bool
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
+    scenario : str
+        Options are 'ssp126', 'ssp585' (default), and 'both'.
+    gauge : int, str, or None.
+        ID or name of gauge. If None (default), then use global mean.
+    ax : Axes
+        Axes on which to plot. If None (default), then use new axes.
+
+    Returns
+    -------
+    ax : Axes
+    """
+    # Create figure if ax is None
+    if not ax:
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+    # Years of interest
+    years = np.arange(2020, 2101, 10)
+    # Percentiles of interest
+    p_str_list = ('5th', '17th', '50th', '83rd', '95th')
+    # Create DataFrame to hold time series of relevant percentiles
+    data_df = pd.DataFrame()
+    # Loop over years and percentiles for each year
+    for year in years:
+        qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
+        for p_str in p_str_list:
+            val = qf_da.sel(quantiles=float(p_str[:-2])/100).data
+            data_df.loc[year, p_str] = val
+    # Plot very likely range, likely range, and median
+    ax.fill_between(years, data_df['5th'], data_df['95th'], color=WF_COLOR_DICT[workflow], alpha=0.1,
+                    label='Very likely range')
+    ax.fill_between(years, data_df['17th'], data_df['83rd'], color=WF_COLOR_DICT[workflow], alpha=0.4,
+                    label='Likely range')
+    ax.plot(years, data_df['50th'], color=WF_COLOR_DICT[workflow], alpha=1, label='Median')
+    # Customise plot
+    ax.legend(loc='upper left')
+    ax.set_xlim([2020, 2100])
+    ax.set_xlabel('Year')
+    ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    if scenario == 'both':
+        ylabel = ylabel.replace(',', ' across scenarios,')
+    else:
+        ylabel = ylabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_ylabel(ylabel)
+    return ax
+
+
 def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
                        rate=False, scenario='ssp585', year=2100, gauge=None, annotations=True, ax=None):
     """
