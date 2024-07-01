@@ -23,6 +23,7 @@ plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['axes.labelsize'] = 'large'
 plt.rcParams['axes.labelweight'] = 'bold'
 plt.rcParams['legend.fontsize'] = 'large'
+plt.rcParams['legend.title_fontsize'] = 'large'
 plt.rcParams['axes.titleweight'] = 'bold'  # titles for subplots
 plt.rcParams['figure.titleweight'] = 'bold'  # suptitle
 plt.rcParams['figure.titlesize'] = 'x-large'  # suptitle
@@ -531,7 +532,7 @@ def plot_sl_timeseries(workflow='fusion_1e+2e', rate=False, scenario='ssp585', g
                     label='Likely range')
     ax.plot(years, data_df['50th'], color=WF_COLOR_DICT[workflow], alpha=1, label='Median')
     # Customise plot
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper left', title=f'{WF_LABEL_DICT[workflow]}:', title_fontproperties={'weight': 'bold'})
     ax.set_xlim([2020, 2100])
     ax.set_xlabel('Year')
     ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
