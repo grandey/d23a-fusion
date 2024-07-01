@@ -525,14 +525,17 @@ def plot_sl_timeseries(workflow='fusion_1e+2e', rate=False, scenario='ssp585', g
         for p_str in p_str_list:
             val = qf_da.sel(quantiles=float(p_str[:-2])/100).data
             data_df.loc[year, p_str] = val
-    # Plot very likely range, likely range, and median
-    ax.fill_between(years, data_df['5th'], data_df['95th'], color=WF_COLOR_DICT[workflow], alpha=0.1,
-                    label='Very likely range')
+    # Plot median, likely range, and very likely range
+    ax.plot(years, data_df['50th'], color=WF_COLOR_DICT[workflow], alpha=1,
+            label=f'Median of {WF_LABEL_DICT[workflow].split(" (")[0].lower()}')
     ax.fill_between(years, data_df['17th'], data_df['83rd'], color=WF_COLOR_DICT[workflow], alpha=0.4,
                     label='Likely range')
-    ax.plot(years, data_df['50th'], color=WF_COLOR_DICT[workflow], alpha=1, label='Median')
+    ax.fill_between(years, data_df['5th'], data_df['17th'], color=WF_COLOR_DICT[workflow], alpha=0.1,
+                    label='Very likely range')
+    ax.fill_between(years, data_df['83rd'], data_df['95th'], color=WF_COLOR_DICT[workflow], alpha=0.1,
+                    label=None)
     # Customise plot
-    ax.legend(loc='upper left', title=f'{WF_LABEL_DICT[workflow]}:', title_fontproperties={'weight': 'bold'})
+    ax.legend(loc='upper left')
     ax.set_xlim([2020, 2100])
     ax.set_xlabel('Year')
     ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
@@ -763,8 +766,8 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
 
     Returns
     -------
-    fig: figure
-    axs: array of Axes
+    fig : figure
+    axs : array of Axes
     """
     # Create Figure and Axes
     nrows = len(workflows_r)
@@ -800,10 +803,50 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     return fig, axs
 
 
+def fig_timeseries(scenario_r=('ssp126', 'ssp585', 'both'), workflow='fusion_1e+2e', rate=False, gauge=None, ylim=None):
+    """
+    Composite figure showing time series of median etc for different scenarios (rows).
+
+    Parameters
+    ----------
+    scenario_r : tuple of str
+        Scenarios, with each scenario corresponding to a different row of figure.
+        Default is ('ssp126', 'ssp585', 'both').
+    workflow : str
+        AR6 workflow (e.g. 'wf_1e'), p-box bound ('lower', 'upper', 'outer'),
+        effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_1e+2e', default).
+    rate : bool
+        If True, return rate of sea-level rise. If False (default), return sea-level rise.
+    gauge : int, str, or None
+        ID or name of gauge. If None (default), then use global mean.
+    ylim : tuple or None
+        y-axis range. Default is None.
+
+    Returns
+    -------
+    fig : figure
+    axs : array of Axes
+    """
+    # Create Figure and Axes
+    nrows = len(scenario_r)
+    fig, axs = plt.subplots(nrows, 1, figsize=(4.5, 3*nrows+0.3), sharex=False, sharey=True, tight_layout=True)
+    # Loop over rows
+    for r, (scenario, ax) in enumerate(zip(scenario_r, axs)):
+        # Plot time series
+        plot_sl_timeseries(workflow=workflow, rate=rate, scenario=scenario, gauge=gauge, ax=ax)
+        # Customise subplot
+        ax.set_title(f' ({chr(97+r)}) {" ".join(SSP_LABEL_DICT[scenario].split())}',
+                     y=1.0, pad=-4, va='top', loc='center')
+        ax.legend(loc='upper left', bbox_to_anchor=(0, 0.9))  # shift legend lower
+        if ylim:
+            ax.set_ylim(ylim)
+    return fig, axs
+
+
 def name_save_fig(fig,
-                  fso='f',  # figure type, either 'f' (main), 's' (supp), or 'o' (other)
-                  exts=('pdf', 'png'),  # extension(s) to use
-                  close=False):
+              fso='f',  # figure type, either 'f' (main), 's' (supp), or 'o' (other)
+              exts=('pdf', 'png'),  # extension(s) to use
+              close=False):
     """Name & save a figure, and increase counter."""
     # Name based on counter, then update counter (in preparation for next figure)
     if fso == 'f':
