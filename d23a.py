@@ -354,22 +354,22 @@ def plot_fusion_weights(ax=None):
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+        fig, ax = plt.subplots(1, 1, figsize=(4.2, 4.2))
     # Get DataArray containing weighting function
     w_da = get_fusion_weights()
     # Plot shaded regions
-    ax.fill_betweenx(w_da.quantiles, 0, w_da, color=WF_COLOR_DICT['mean_1e+2e'], alpha=0.2)
-    ax.fill_betweenx(w_da.quantiles, 1, w_da, color=WF_COLOR_DICT['outer'], alpha=0.2)
+    ax.fill_between(w_da.quantiles, 0, w_da, color=WF_COLOR_DICT['mean_1e+2e'], alpha=0.2)
+    ax.fill_between(w_da.quantiles, 1, w_da, color=WF_COLOR_DICT['outer'], alpha=0.2)
     # Annotate, label axes etc
-    ax.text(0.35, 0.5, WF_LABEL_DICT['mean_1e+2e'],
+    ax.text(0.5, 0.5, WF_LABEL_DICT['mean_1e+2e'],
             fontsize='large', horizontalalignment='center', verticalalignment='center', fontweight='bold')
-    for y in [0.94, 0.06]:
-        ax.text(0.97, y, WF_LABEL_DICT['outer'],
-                fontsize='large', horizontalalignment='right', verticalalignment='center', fontweight='bold')
+    for x in [0.95, 0.06]:
+        ax.text(x, 0.97, WF_LABEL_DICT['outer'], rotation='vertical',
+                fontsize='large', horizontalalignment='center', verticalalignment='top', fontweight='bold')
     ax.set_xlim([0, 1])
     ax.set_ylim([0, 1])
-    ax.set_xlabel('Weight for contribution to fusion')
-    ax.set_ylabel('Probability')
+    ax.set_xlabel('Probability ($p$)')
+    ax.set_ylabel('Weight for contribution to fusion ($w$)')
     return ax
 
 
@@ -404,35 +404,35 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
     # Plot p-box?
     if pbox:
         # Get lower and upper p-box bounds
         lower_da = get_sl_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
         upper_da = get_sl_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Shade p-box
-        ax.fill_betweenx(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
+        ax.fill_between(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get quantile function data and plot
         qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.5, linestyle='--',
+        ax.plot(qf_da.quantiles, qf_da, color=WF_COLOR_DICT[workflow], alpha=0.5, linestyle='--',
                 label=WF_LABEL_DICT[workflow])
     # Loop over workflows
     for workflow in workflows:
         # Get quantile function data and plot
         qf_da = get_sl_qf(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        ax.plot(qf_da, qf_da.quantiles, color=WF_COLOR_DICT[workflow], alpha=0.9, label=WF_LABEL_DICT[workflow])
+        ax.plot(qf_da.quantiles, qf_da, color=WF_COLOR_DICT[workflow], alpha=0.9, label=WF_LABEL_DICT[workflow])
     # Customise plot
-    ax.legend(loc='lower right')
-    ax.set_ylim([0, 1])
-    ax.set_ylabel('Probability')
-    xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    ax.legend(loc='upper center')
+    ax.set_xlim([0, 1])
+    ax.set_xlabel('Probability ($p$)')
+    ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
     if scenario == 'both':
-        xlabel = xlabel.replace(',', ' across scenarios,')
+        ylabel = ylabel.replace(',', ' across scenarios,')
     else:
-        xlabel = xlabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
-    ax.set_xlabel(xlabel)
+        ylabel = ylabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_ylabel(ylabel)
     return ax
 
 
@@ -465,26 +465,27 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(4.5, 3))
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, linestyle='--',
+        sns.kdeplot(y=marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.5, linestyle='--',
                     label=WF_LABEL_DICT[workflow], ax=ax)
     # Loop over workflows
     for workflow in workflows:
         # Get marginal samples and plot
         marginal_n = sample_sl_marginal(workflow=workflow, rate=rate, scenario=scenario, year=year, gauge=gauge)
-        sns.kdeplot(marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
+        sns.kdeplot(y=marginal_n, color=WF_COLOR_DICT[workflow], cut=0, alpha=0.9, label=WF_LABEL_DICT[workflow], ax=ax)
     # Customise plot
     ax.legend(loc='upper right')
-    xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
+    ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
     if scenario == 'both':
-        xlabel = xlabel.replace(',', ' across scenarios,')
+        ylabel = ylabel.replace(',', ' across scenarios,')
     else:
-        xlabel = xlabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
-    ax.set_xlabel(xlabel)
+        ylabel = ylabel.replace(',', f' under {SSP_LABEL_DICT[scenario]},')
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel('Probability density')
     return ax
 
 
@@ -735,23 +736,23 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
     return ax
 
 
-def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)),
-                      bg_workflows_r=(list(), list(), ('mean_1e+2e', 'outer')),
-                      pbox_r=(False, True, False),
-                      rate=False, scenario='ssp585', year=2100, gauge=None, xlim=None):
+def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)),
+                      bg_workflows_c=(list(), list(), ('mean_1e+2e', 'outer')),
+                      pbox_c=(False, True, False),
+                      rate=False, scenario='ssp585', year=2100, gauge=None, lim=None):
     """
-    Composite figure showing sea-level quantile functions (1st col) and marginal densities (2nd col).
+    Composite figure showing sea-level quantile functions (1st row) and marginal densities (2nd row).
 
     Parameters
     ----------
-    workflows_r : list of list of str
+    workflows_c : list of list of str
         List of lists containing AR6 workflows, p-box bounds, effective distributions, and/or fusions, with each list
-        corresponding to a different row of figure (indicated by _r in parameter name).
+        corresponding to a different column of figure (indicated by _c in parameter name).
         Default is (('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)).
-    bg_workflows_r : list of list of str
+    bg_workflows_c : list of list of str
         List of lists containing workflows to show in lighter colour in background.
         Default is (list(), list(), ('mean_1e+2e', 'outer')).
-    pbox_r : list of bool
+    pbox_c : list of bool
         When True, plot p-box. Default is (False, True, False).
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
@@ -761,8 +762,8 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
         Year. Default is 2100.
     gauge : int, str, or None.
         ID or name of gauge. If None (default), then use global mean.
-    xlim : list or None
-        x-axis range. Default is None.
+    lim : list or None
+        Sea-level axis range. Default is None.
 
     Returns
     -------
@@ -770,32 +771,32 @@ def fig_qfs_marginals(workflows_r=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     axs : array of Axes
     """
     # Create Figure and Axes
-    nrows = len(workflows_r)
-    fig, axs = plt.subplots(nrows, 2, figsize=(9, 3*nrows+0.3), sharex=False, sharey='col', tight_layout=True)
-    # Loop over rows
-    for r in range(nrows):
-        workflows = workflows_r[r]
-        bg_workflows = bg_workflows_r[r]
-        pbox = pbox_r[r]
-        # 1st column: quantile functions
+    ncols = len(workflows_c)
+    fig, axs = plt.subplots(2, ncols, figsize=(4*ncols+0.3, 8), tight_layout=True)
+    # Loop over columns
+    for c in range(ncols):
+        workflows = workflows_c[c]
+        bg_workflows = bg_workflows_c[c]
+        pbox = pbox_c[c]
+        # 1st row: quantile functions
         try:
-            ax = axs[r, 0]
-        except IndexError:  # IndexError is encountered if only single row
+            ax = axs[0, c]
+        except IndexError:  # IndexError is encountered if only single column
             ax = axs[0]
         plot_sl_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
                     rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
-        # 2nd column: marginal densities
+        # 2nd row: marginal densities
         try:
-            ax = axs[r, 1]
+            ax = axs[1, c]
         except IndexError:
             ax = axs[1]
         plot_sl_marginals(workflows=workflows, bg_workflows=bg_workflows,
                           rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
     # Customise figure
     for i, ax in enumerate(axs.flatten()):
-        ax.set_title(f' ({chr(97+i)})', y=1.0, pad=-4, va='top', loc='left')
-        if xlim:
-            ax.set_xlim(xlim)
+        ax.set_title(f'  ({chr(97+i)})', y=1.0, pad=-6, va='top', loc='left')
+        if lim:
+            ax.set_ylim(lim)
     if gauge is not None:
         ax = axs.flatten()[1]
         ax.text(1, 1.05, f'Location: {gauge.replace("_", " ").title()}',
