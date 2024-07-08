@@ -626,7 +626,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
 
 
 def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', 'upper'), rate=False,
-                            scenarios=('ssp126', 'ssp585', 'both'), year=2100, gauge=None, ax=None):
+                            scenarios=('ssp126', 'ssp585'), year=2100, gauge=None, ax=None):
     """
     Plot heatmap table showing probability of exceeding a sea-level threshold.
 
@@ -640,7 +640,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenarios : list str
-        List containing scenarios, for table rows. Default is ('ssp126', 'ssp585', 'both').
+        List containing scenarios, for table rows. Default is ('ssp126', 'ssp585').
     year : int
         Year. Default is 2100.
     gauge : int, str, or None.
@@ -654,7 +654,7 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(5.5, 2.5), tight_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(5.5, 2), tight_layout=True)
     # For each combination of workflow and scenario, save probability of exceeding threshold to DataFrame
     p_exceed_df = pd.DataFrame()
     for workflow in workflows:
@@ -807,7 +807,7 @@ def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     return fig, axs
 
 
-def fig_timeseries(scenario_r=('ssp126', 'ssp585', 'both'), workflow='fusion_1e+2e', rate=False, gauge=None, ylim=None):
+def fig_timeseries(scenario_r=('ssp126', 'ssp585'), workflow='fusion_1e+2e', rate=False, gauge=None, ylim=None):
     """
     Composite figure showing time series of median etc for different scenarios (rows).
 
@@ -815,7 +815,7 @@ def fig_timeseries(scenario_r=('ssp126', 'ssp585', 'both'), workflow='fusion_1e+
     ----------
     scenario_r : tuple of str
         Scenarios, with each scenario corresponding to a different row of figure.
-        Default is ('ssp126', 'ssp585', 'both').
+        Default is ('ssp126', 'ssp585').
     workflow : str
         AR6 workflow (e.g. 'wf_1e'), p-box bound ('lower', 'upper', 'outer'),
         effective distribution (e.g. 'effective_0.5'), or fusion (e.g. 'fusion_1e+2e', default).
