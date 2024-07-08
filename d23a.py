@@ -578,7 +578,7 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     """
     # Create figure if ax is None
     if not ax:
-        fig, ax = plt.subplots(1, 1, figsize=(6, 5), constrained_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(7, 5), constrained_layout=True)
     # Loop over workflows, sample marginal, and save to DataFrame
     samples_df = pd.DataFrame()  # DataFrame to hold samples from different marginals
     for workflow in workflows:
@@ -601,15 +601,15 @@ def plot_sl_violinplot(workflows=('wf_2e', 'fusion_1e+2e', 'outer'),
     if annotations:
         for p, y, text in zip(
                 [50, 99], [0.5, 1.5],
-                [f'Centre:\n$F \sim M$',
-                 f'Upper tail:\n$F \sim B$']
+                [f'Centre: fusion follows\nmedium conf. mean',
+                 f'Tails: fusion follows\nlow conf. outer bound']
                 ):
             qf_da = get_sl_qf(workflow=workflows[1], rate=rate, scenario=scenario, year=year, gauge=gauge)
             val = qf_da.sel(quantiles=p/100).data
             ax.annotate(text, [val, y], ha='center', va='center', color=WF_COLOR_DICT[workflows[1]])
     # Customise plot
     ax.legend(loc='upper right', title='Percentile', title_fontsize='large')
-    ax.set_yticklabels([WF_LABEL_DICT[workflow] for workflow in workflows])
+    ax.set_yticklabels(['conf.\n'.join(WF_LABEL_DICT[workflow].split('conf.')) for workflow in workflows])
     xlabel = SL_LABEL_DICT[(rate, bool(gauge))]
     if scenario == 'both':
         xlabel = xlabel.replace(',', ' across scenarios,')
