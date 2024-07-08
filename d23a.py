@@ -411,7 +411,8 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
         lower_da = get_sl_qf(workflow='lower', rate=rate, scenario=scenario, year=year, gauge=gauge)
         upper_da = get_sl_qf(workflow='upper', rate=rate, scenario=scenario, year=year, gauge=gauge)
         # Shade p-box
-        ax.fill_between(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1, label='p-box')
+        ax.fill_between(lower_da.quantiles, lower_da, upper_da, color=WF_COLOR_DICT['outer'], alpha=0.1,
+                        label='Low confidence p-box')
     # Loop over background workflows
     for workflow in bg_workflows:
         # Get quantile function data and plot
@@ -739,9 +740,9 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
 def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer', 'effective_0.5'), ('fusion_1e+2e',)),
                       bg_workflows_c=(list(), list(), ('mean_1e+2e', 'outer')),
                       pbox_c=(False, True, False),
-                      rate=False, scenario='ssp585', year=2100, gauge=None, lim=None):
+                      rate=False, scenario='ssp585', year=2100, gauge=None, lim=None, show_densities=False):
     """
-    Composite figure showing sea-level quantile functions (1st row) and marginal densities (2nd row).
+    Composite figure showing sea-level quantile functions (1st row) and marginal densities (2nd row; optional).
 
     Parameters
     ----------
@@ -764,6 +765,8 @@ def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
         ID or name of gauge. If None (default), then use global mean.
     lim : list or None
         Sea-level axis range. Default is None.
+    show_densities : bool
+        If True, show marginal densities in 2nd row. If False (default), do not include 2nd row.
 
     Returns
     -------
@@ -772,26 +775,26 @@ def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     """
     # Create Figure and Axes
     ncols = len(workflows_c)
-    fig, axs = plt.subplots(2, ncols, figsize=(4*ncols+0.3, 8), tight_layout=True)
+    if show_densities:
+        fig, axs = plt.subplots(2, ncols, figsize=(4*ncols+0.3, 8), tight_layout=True)
+    else:
+        fig, axs = plt.subplots(1, ncols, figsize=(4*ncols+0.3, 4), tight_layout=True)
+        if ncols == 1:  # if single subplot, put axes in array so that .flatten() works below
+            axs = np.array([axs,])
     # Loop over columns
     for c in range(ncols):
         workflows = workflows_c[c]
         bg_workflows = bg_workflows_c[c]
         pbox = pbox_c[c]
         # 1st row: quantile functions
-        try:
-            ax = axs[0, c]
-        except IndexError:  # IndexError is encountered if only single column
-            ax = axs[0]
+        ax = axs.flatten()[c]
         plot_sl_qfs(workflows=workflows, bg_workflows=bg_workflows, pbox=pbox,
                     rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
         # 2nd row: marginal densities
-        try:
-            ax = axs[1, c]
-        except IndexError:
-            ax = axs[1]
-        plot_sl_marginals(workflows=workflows, bg_workflows=bg_workflows,
-                          rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
+        if show_densities:
+            ax = axs.flatten()[ncols+c]
+            plot_sl_marginals(workflows=workflows, bg_workflows=bg_workflows,
+                              rate=rate, scenario=scenario, year=year, gauge=gauge, ax=ax)
     # Customise figure
     for i, ax in enumerate(axs.flatten()):
         ax.set_title(f'  ({chr(97+i)})', y=1.0, pad=-6, va='top', loc='left')
