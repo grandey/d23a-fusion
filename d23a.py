@@ -807,14 +807,14 @@ def fig_qfs_marginals(workflows_c=(('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), ('outer'
     return fig, axs
 
 
-def fig_timeseries(scenario_r=('ssp126', 'ssp585'), workflow='fusion_1e+2e', rate=False, gauge=None, ylim=None):
+def fig_timeseries(scenario_c=('ssp126', 'ssp585'), workflow='fusion_1e+2e', rate=False, gauge=None, ylim=None):
     """
-    Composite figure showing time series of median etc for different scenarios (rows).
+    Composite figure showing time series of median etc for different scenarios (columns).
 
     Parameters
     ----------
-    scenario_r : tuple of str
-        Scenarios, with each scenario corresponding to a different row of figure.
+    scenario_c : tuple of str
+        Scenarios, with each scenario corresponding to a different column of figure.
         Default is ('ssp126', 'ssp585').
     workflow : str
         AR6 workflow (e.g. 'wf_1e'), p-box bound ('lower', 'upper', 'outer'),
@@ -832,14 +832,14 @@ def fig_timeseries(scenario_r=('ssp126', 'ssp585'), workflow='fusion_1e+2e', rat
     axs : array of Axes
     """
     # Create Figure and Axes
-    nrows = len(scenario_r)
-    fig, axs = plt.subplots(nrows, 1, figsize=(4.5, 3*nrows+0.3), sharex=False, sharey=True, tight_layout=True)
-    # Loop over rows
-    for r, (scenario, ax) in enumerate(zip(scenario_r, axs)):
+    ncols = len(scenario_c)
+    fig, axs = plt.subplots(1, ncols, figsize=(4*ncols, 3), sharex=False, sharey=False, tight_layout=True)
+    # Loop over columns
+    for c, (scenario, ax) in enumerate(zip(scenario_c, axs)):
         # Plot time series
         plot_sl_timeseries(workflow=workflow, rate=rate, scenario=scenario, gauge=gauge, ax=ax)
         # Customise subplot
-        ax.set_title(f' ({chr(97+r)}) {" ".join(SSP_LABEL_DICT[scenario].split())}',
+        ax.set_title(f' ({chr(97+c)}) {" ".join(SSP_LABEL_DICT[scenario].split())}',
                      y=1.0, pad=-4, va='top', loc='center')
         ax.legend(loc='upper left', bbox_to_anchor=(0, 0.9))  # shift legend lower
         if ylim:
