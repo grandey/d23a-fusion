@@ -363,13 +363,13 @@ def plot_fusion_weights(ax=None):
     # Annotate, label axes etc
     ax.text(0.5, 0.5, WF_LABEL_DICT['mean_1e+2e'],
             fontsize='large', horizontalalignment='center', verticalalignment='center', fontweight='bold')
-    for x in [0.95, 0.06]:
-        ax.text(x, 0.97, WF_LABEL_DICT['outer'], rotation='vertical',
+    for x in [0.97, 0.05]:
+        ax.text(x, 0.98, WF_LABEL_DICT['outer'], rotation='vertical',
                 fontsize='large', horizontalalignment='center', verticalalignment='top', fontweight='bold')
     ax.set_xlim([0, 1])
     ax.set_ylim([0, 1])
-    ax.set_xlabel('Probability ($p$)')
-    ax.set_ylabel('Weight for contribution to fusion ($w$)')
+    ax.set_xlabel('Probability')
+    ax.set_ylabel('Weight for contribution to fusion')
     return ax
 
 
@@ -426,7 +426,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
     # Customise plot
     ax.legend(loc='upper center')
     ax.set_xlim([0, 1])
-    ax.set_xlabel('Probability ($p$)')
+    ax.set_xlabel('Probability')
     ylabel = SL_LABEL_DICT[(rate, bool(gauge))]
     if scenario == 'both':
         ylabel = ylabel.replace(',', ' across scenarios,')
