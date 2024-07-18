@@ -55,8 +55,8 @@ WF_LABEL_DICT = {'wf_1e': 'Workflow 1e', 'wf_1f': 'Workflow 1f',  # workflow lab
                  'fusion_2e': 'Fusion 2e', 'fusion_2f': 'Fusion 2f', 'fusion_1e': 'Fusion 1e',
                  'triangular_1e+2e': 'Triangular fusion',}
 SSP_LABEL_DICT = {'ssp126': 'SSP1-2.6', 'ssp585': 'SSP5-8.5', 'both': 'Across\nscenarios'}
-SL_LABEL_DICT = {(False, False): '$\Delta$GMSL, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
-                 (False, True): '$\Delta$RSL, m',
+SL_LABEL_DICT = {(False, False): 'GMSL, m',  # axis labels etc depend on (rate, bool(gauge)) tuple
+                 (False, True): 'RSL, m',
                  (True, True): 'RSL rate, mm yr$^{-1}$'}
 FIG_DIR = Path.cwd() / 'figs_d23a'  # directory in which to save figures
 F_NUM = itertools.count(1)  # main figures counter
