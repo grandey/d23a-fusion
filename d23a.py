@@ -86,6 +86,8 @@ def get_gauge_info(gauge='TANJONG_PAGAR'):
     gauge_info : dict
         Dictionary containing gauge_name, gauge_id, lat, lon.
     """
+    # Inform if this function is called
+    print('get_gauge_info() has been called.')  # paper focuses on GMSL, not RSL
     # Read input file into DataFrame
     in_fn = IN_BASE / 'location_list.lst'
     in_df = pd.read_csv(in_fn, sep='\t', names=['gauge_name', 'gauge_id', 'lat', 'lon'])
@@ -130,6 +132,7 @@ def get_fusion_weights(weighting='trapezoidal'):
         da3[:] = (1 - da3.quantiles) / 0.17
         w_da = xr.concat([da1, da2, da3], dim='quantiles')
     elif weighting == 'triangular':
+        print('get_fusion_weights(weighting=triangular) has been called.')  # paper does not use weighting=triangular
         w_da.data = 1 - np.abs(w_da.quantiles - 0.5) * 2
     else:
         raise ValueError(f"weighting should be 'trapezoidal' or 'triangular', not '{weighting}'.")
@@ -141,7 +144,7 @@ def get_fusion_weights(weighting='trapezoidal'):
 @cache
 def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=None, plot=False):
     """
-    Return quantile function corresponding to a projection of total sea-level rise.
+    Return quantile function corresponding to a projection of sea level.
 
     Parameters
     ----------
@@ -164,6 +167,16 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
     qf_da : xarray DataArray
         DataArray of sea-level rise quantiles in m or mm/yr for different probability levels.
     """
+    # Print message if parameters follow options that are not used in the paper
+    if workflow not in ['wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'lower', 'upper', 'outer',
+                        'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e']:
+        print(f'get_sl_qf(workflow={workflow}) has been called.')
+    if rate is not False:
+        print(f'get_sl_qf(rate={rate}) has been called.')
+    if scenario not in ['ssp126', 'ssp585']:
+        print(f'get_sl_qf(scenario={scenario}) has been called.')
+    if gauge is not None:
+        print(f'get_sl_qf(gauge={gauge}) has been called.')
     # Case 1: single workflow, corresponding to one of the alternative projections
     if workflow in ['wf_1e', 'wf_1f', 'wf_2e', 'wf_2f', 'wf_3e', 'wf_3f', 'wf_4']:
         # Find gauge_id for location
@@ -192,7 +205,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         if not rate:
             qf_da = qf_da / 1000.
             qf_da.attrs['units'] = 'm'
-    # Case 2: lower or upper bound of low-confidence p-box
+    # Case 2: lower or upper bound of low confidence p-box
     elif workflow in ['lower', 'upper']:
         # Contributing workflows (Kopp et al., GMD, 2023)
         if not rate:
@@ -201,20 +214,20 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
             wf_list = ['wf_1f', 'wf_2f', 'wf_3f', 'wf_4']
         # Contributing scenarios
         if scenario == 'both':
-            scen_list = ['ssp126', 'ssp585']
+            ssp_list = ['ssp126', 'ssp585']
         else:
-            scen_list = [scenario,]
+            ssp_list = [scenario,]
         # Get quantile function data for each of these workflows and scenarios
         qf_da_list = []
         for wf in wf_list:
-            for scen in scen_list:
-                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scen, year=year, gauge=gauge))
-        concat_da = xr.concat(qf_da_list, 'wf_scen')
+            for ssp in ssp_list:
+                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=ssp, year=year, gauge=gauge))
+        concat_da = xr.concat(qf_da_list, 'wf_ssp')
         # Find lower or upper bound
         if workflow == 'lower':
-            qf_da = concat_da.min(dim='wf_scen')
+            qf_da = concat_da.min(dim='wf_ssp')
         else:
-            qf_da = concat_da.max(dim='wf_scen')
+            qf_da = concat_da.max(dim='wf_ssp')
     # Case 3: Outer bound of p-box
     elif workflow == 'outer':
         # Get data for lower and upper p-box bounds
@@ -239,17 +252,17 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
     elif 'mean' in workflow:
         # Contributing scenarios
         if scenario == 'both':
-            scen_list = ['ssp126', 'ssp585']
+            ssp_list = ['ssp126', 'ssp585']
         else:
-            scen_list = [scenario,]
+            ssp_list = [scenario,]
         # Get quantile function data for workflows and scenarios
         qf_da_list = []
         for wf in [f'wf_{s}' for s in workflow.split('_')[-1].split('+')]:
-            for scen in scen_list:
-                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=scen, year=year, gauge=gauge))
-        concat_da = xr.concat(qf_da_list, dim='wf_scen')
+            for ssp in ssp_list:
+                qf_da_list.append(get_sl_qf(workflow=wf, rate=rate, scenario=ssp, year=year, gauge=gauge))
+        concat_da = xr.concat(qf_da_list, dim='wf_ssp')
         # Derive mean
-        qf_da = concat_da.mean(dim='wf_scen')
+        qf_da = concat_da.mean(dim='wf_ssp')
     # Case 6: fusion distribution
     elif 'fusion' or 'triangular' in workflow:
         # Get data for preferred workflow and outer bound of p-box
@@ -263,7 +276,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
         if 'triangular' in workflow:
             w_da = get_fusion_weights(weighting='triangular')
         else:
-            w_da = get_fusion_weights()  # default is triangular weighting function
+            w_da = get_fusion_weights()  # use default (trapezoidal)
         # Derive fusion distribution; rely on automatic broadcasting/alignment
         qf_da = w_da * pref_da + (1 - w_da) * outer_da
         # Correct median (which is currently nan due to nan in outer_da)
@@ -286,7 +299,7 @@ def get_sl_qf(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=
 def sample_sl_marginal(workflow='wf_1e', rate=False, scenario='ssp585', year=2100, gauge=None, n_samples=int(1e6),
                        plot=False):
     """
-    Sample marginal distribution corresponding to a projection of total sea level.
+    Sample marginal distribution corresponding to a projection of sea level.
 
     Parameters
     ----------
@@ -356,7 +369,7 @@ def plot_fusion_weights(ax=None):
     if not ax:
         fig, ax = plt.subplots(1, 1, figsize=(4.2, 4.2))
     # Get DataArray containing weighting function
-    w_da = get_fusion_weights()
+    w_da = get_fusion_weights()  # use default (trapezoidal)
     # Plot shaded regions
     ax.fill_between(w_da.quantiles, 0, w_da, color=WF_COLOR_DICT['mean_1e+2e'], alpha=0.2)
     ax.fill_between(w_da.quantiles, 1, w_da, color=WF_COLOR_DICT['outer'], alpha=0.2)
@@ -376,7 +389,7 @@ def plot_fusion_weights(ax=None):
 def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(), pbox=False,
                 rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot quantile functions corresponding to projections of total sea level.
+    Plot quantile functions corresponding to projections of sea level.
 
     Parameters
     ----------
@@ -440,7 +453,7 @@ def plot_sl_qfs(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list
 def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflows=list(),
                       rate=False, scenario='ssp585', year=2100, gauge=None, ax=None):
     """
-    Plot marginal densities corresponding to projections of total sea level.
+    Plot marginal densities corresponding to projections of sea level.
 
     Parameters
     ----------
@@ -464,6 +477,8 @@ def plot_sl_marginals(workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4'), bg_workflow
     -------
     ax : Axes
     """
+    # Inform if this function is called
+    print('plot_sl_marginals() has been called.')  # revised paper does not use this function
     # Create figure if ax is None
     if not ax:
         fig, ax = plt.subplots(1, 1, figsize=(4, 4))
