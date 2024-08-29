@@ -734,12 +734,14 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
             val = qf_da.sel(quantiles=perc_flt/100).data  # percentile value
             val_df.loc[WF_LABEL_DICT[workflow], perc_str] = val
     # Plot heatmap
-    sns.heatmap(val_df, annot=True, fmt=fmt, cmap='plasma_r', cbar=False, annot_kws={'weight': 'bold'}, ax=ax)
+    sns.heatmap(val_df, annot=True, fmt=fmt, cmap='plasma_r', vmin=0.4, vmax=2.5, cbar=False,
+                annot_kws={'weight': 'bold', 'size': 'large'}, ax=ax)
     # Customise plot
     ax.grid(False)
     ax.tick_params(top=False, bottom=False, left=False, right=False, labeltop=True, labelbottom=False, rotation=0)
     for label in ax.get_xticklabels() + ax.get_yticklabels():
         label.set_fontweight('bold')
+        label.set_fontsize('large')
     title = f'Percentiles of {SL_LABEL_DICT[(rate, bool(gauge))]}\n'
     if scenario == 'both':
         title = title.replace(',', ' across scenarios,')
