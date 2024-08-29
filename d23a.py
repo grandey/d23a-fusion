@@ -692,9 +692,9 @@ def plot_exceedance_heatmap(threshold=1.5, workflows=('lower', 'fusion_1e+2e', '
 
 
 def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th'),
-                             workflows=('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e',
-                                        'fusion_1e+2e'),
-                             rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.1f', ax=None):
+                             workflows=('fusion_1e+2e', 'mean_1e+2e', 'outer', 'wf_1e', 'wf_2e', 'wf_3e', 'wf_4',
+                                        'effective_0.5'),
+                            rate=False, scenario='ssp585', year=2100, gauge=None, fmt='.2f', ax=None):
     """
     Plot heatmap table showing percentiles of quantile functions.
 
@@ -704,7 +704,7 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
         List containing percentiles, for table columns. Default is ('5th', '17th', '50th', '83rd', '95th').
     workflows : tuple of str
         List containing workflows etc, for table rows.
-        Default is ('wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'outer', 'effective_0.5', 'mean_1e+2e', 'fusion_1e+2e')
+        Default is ('fusion_1e+2e', 'mean_1e+2e', 'outer', 'wf_1e', 'wf_2e', 'wf_3e', 'wf_4', 'effective_0.5')
     rate : bool
         If True, return rate of sea-level rise. If False (default), return sea-level rise.
     scenario : str
@@ -714,7 +714,7 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
     gauge : int, str, or None.
         ID or name of gauge. If None (default), then use global mean.
     fmt : str.
-        Format string to use for values. Default is '.1f'.
+        Format string to use for values. Default is '.2f'.
     ax : Axes
         Axes on which to plot. If None (default), then use new axes.
 
@@ -734,7 +734,7 @@ def plot_percentiles_heatmap(percentiles=('5th', '17th', '50th', '83rd', '95th')
             val = qf_da.sel(quantiles=perc_flt/100).data  # percentile value
             val_df.loc[WF_LABEL_DICT[workflow], perc_str] = val
     # Plot heatmap
-    sns.heatmap(val_df, annot=True, fmt=fmt, cmap='plasma_r', vmin=0.4, vmax=2.5, cbar=False,
+    sns.heatmap(val_df, annot=True, fmt=fmt, cmap='plasma_r', vmin=0.3, vmax=3.0, cbar=False,
                 annot_kws={'weight': 'bold', 'size': 'large'}, ax=ax)
     # Customise plot
     ax.grid(False)
