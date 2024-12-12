@@ -5,7 +5,7 @@
 ## Usage guidelines
 This repository accompanies the following manuscript:
 
-B. S. Grandey, J. Dauwels, Z. Y. Koh, B. P. Horton, and L. Y. Chew (2024),  **Fusion of Probabilistic Projections of Sea-Level Rise**.
+B. S. Grandey, J. Dauwels, Z. Y. Koh, B. P. Horton, and L. Y. Chew (2024),  **Fusion of Probabilistic Projections of Sea-Level Rise**, _Earth's Future_, https://doi.org/10.1029/2024EF005295.
 
 The manuscript serves as the primary reference.
 The Zenodo archive of this repository serves as a secondary reference.
